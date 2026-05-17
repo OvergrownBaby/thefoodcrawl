@@ -14,6 +14,10 @@ type Props = {
   // Visual mode for hero embeds
   interactive?: boolean
   className?: string
+  // Draw a dashed polyline connecting pins in the given order
+  routeOrder?: string[]
+  // Number each pin (e.g. 1,2,3...) in the polyline order
+  numbered?: boolean
 }
 
 const TILE_STYLE: maplibregl.StyleSpecification = {
@@ -51,6 +55,8 @@ export function AtlasMap({
   zoom,
   interactive = true,
   className,
+  routeOrder,
+  numbered = false,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MLMap | null>(null)
@@ -108,10 +114,12 @@ export function AtlasMap({
       el.title = r.name
       // staggered animation delay so pulses don't sync
       const delay = ((parseInt(r.id.replace(/\D/g, '').slice(-2) || '0', 10)) % 24) / 10
+      const order = numbered && routeOrder ? routeOrder.indexOf(r.id) + 1 : 0
+      const badge = order > 0 ? `<span class="fm-marker-num">${order}</span>` : ''
       el.innerHTML = `
         <span class="fm-marker-pin">
           <span class="fm-marker-pulse" style="animation-delay:${delay}s"></span>
-          <span class="fm-marker-pin-body"></span>
+          <span class="fm-marker-pin-body">${badge}</span>
         </span>
         <span class="fm-marker-label">${escapeHtml(r.name)}</span>
       `
@@ -141,7 +149,56 @@ export function AtlasMap({
     } else if (restaurants.length === 1) {
       map.flyTo({ center: [restaurants[0].lng, restaurants[0].lat], zoom: 14, duration: 500 })
     }
-  }, [restaurants, onSelect, selectedId])
+  }, [restaurants, onSelect, selectedId, numbered, routeOrder])
+
+  // Route polyline — draw a line in routeOrder
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+
+    const draw = () => {
+      const byId = new Map(restaurants.map((r) => [r.id, r]))
+      const ordered: Restaurant[] = []
+      if (routeOrder) {
+        for (const id of routeOrder) {
+          const r = byId.get(id)
+          if (r) ordered.push(r)
+        }
+      }
+      const coords = ordered.map((r) => [r.lng, r.lat] as [number, number])
+
+      const geojson: GeoJSON.Feature<GeoJSON.LineString> = {
+        type: 'Feature',
+        properties: {},
+        geometry: { type: 'LineString', coordinates: coords },
+      }
+
+      const existing = map.getSource('fm-route') as maplibregl.GeoJSONSource | undefined
+      if (existing) {
+        existing.setData(geojson)
+      } else {
+        map.addSource('fm-route', { type: 'geojson', data: geojson })
+        map.addLayer({
+          id: 'fm-route-line',
+          type: 'line',
+          source: 'fm-route',
+          paint: {
+            'line-color': '#DA3F2A',
+            'line-width': 2.5,
+            'line-opacity': 0.65,
+            'line-dasharray': [2, 2],
+          },
+          layout: {
+            'line-cap': 'round',
+            'line-join': 'round',
+          },
+        })
+      }
+    }
+
+    if (map.isStyleLoaded()) draw()
+    else map.once('load', draw)
+  }, [restaurants, routeOrder])
 
   // Highlight selected
   useEffect(() => {

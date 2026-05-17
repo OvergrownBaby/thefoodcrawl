@@ -6,6 +6,7 @@ import { SourceBadge } from '@/components/source-badge'
 import { CreatorAvatar } from '@/components/creator-avatar'
 import { formatTimestamp, priceDots } from '@/lib/utils'
 import { ExternalLink, MapPin, ArrowLeft } from 'lucide-react'
+import { photoUrl } from '@/lib/photo'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,6 +37,7 @@ export default async function PlacePage({
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
     `${restaurant.name} ${restaurant.city}`
   )}`
+  const hero = photoUrl(restaurant.photoName, 800)
 
   return (
     <div className="flex-1">
@@ -51,7 +53,16 @@ export default async function PlacePage({
         <div className="grid lg:grid-cols-[1fr_360px] gap-6">
           {/* Left: details */}
           <div>
-            <div className="bg-[var(--card)] rounded-2xl border border-[var(--border)] p-6">
+            <div className="bg-[var(--card)] rounded-2xl border border-[var(--border)] overflow-hidden">
+              {hero && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={hero}
+                  alt={restaurant.name}
+                  className="w-full h-56 object-cover bg-[var(--muted-soft)]"
+                />
+              )}
+              <div className="p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h1 className="text-3xl font-bold">{restaurant.name}</h1>
@@ -81,6 +92,7 @@ export default async function PlacePage({
                   <MapPin className="w-4 h-4" />
                   Open in Google Maps
                 </a>
+              </div>
               </div>
             </div>
 

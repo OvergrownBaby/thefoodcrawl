@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed:one": "tsx scripts/seed-one.ts"
+    "seed:one": "tsx scripts/seed-one.ts",
+    "backfill:photos": "tsx scripts/backfill-photos.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.96.0",

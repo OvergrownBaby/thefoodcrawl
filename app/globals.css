@@ -162,6 +162,21 @@ body {
   background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.55), transparent 60%);
   pointer-events: none;
 }
+.fm-marker-num {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+  line-height: 1;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+  font-variant-numeric: tabular-nums;
+}
 .fm-marker:hover .fm-marker-pin-body {
   transform: scale(1.15);
   box-shadow:

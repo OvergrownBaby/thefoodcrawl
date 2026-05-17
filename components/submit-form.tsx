@@ -7,6 +7,9 @@ import { SourceBadge } from './source-badge'
 import { CreatorAvatar } from './creator-avatar'
 import { Loader2, Sparkles, Link as LinkIcon, Check, X, ExternalLink, ArrowRight } from 'lucide-react'
 import { cn, formatTimestamp } from '@/lib/utils'
+import { AtlasMap } from './atlas-map'
+import { photoUrl } from '@/lib/photo'
+import type { Restaurant } from '@/lib/types'
 
 type Stage = 'idle' | 'fetching' | 'extracting' | 'geocoding' | 'done' | 'failed'
 
@@ -25,6 +28,9 @@ type ResultRestaurant = {
   country: string
   cuisine?: string
   priceLevel?: number
+  lat: number
+  lng: number
+  photoName?: string
 }
 
 type ResultMention = {
@@ -41,6 +47,9 @@ type ResultMention = {
     country: string
     cuisine: string | null
     price_level: number | null
+    lat: number
+    lng: number
+    photo_name: string | null
   } | null
 }
 
@@ -115,6 +124,9 @@ export function SubmitForm() {
         country: m.restaurants.country,
         cuisine: m.restaurants.cuisine ?? undefined,
         priceLevel: m.restaurants.price_level ?? undefined,
+        lat: m.restaurants.lat,
+        lng: m.restaurants.lng,
+        photoName: m.restaurants.photo_name ?? undefined,
       }))
 
       const ms = mentions.map((m) => ({
@@ -247,112 +259,176 @@ export function SubmitForm() {
       )}
 
       {stage === 'done' && result && (
-        <div className="mt-8 bg-white rounded-2xl border border-[var(--border)] p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="font-bold text-lg">
-                Added {result.restaurants.length}{' '}
-                {result.restaurants.length === 1 ? 'restaurant' : 'restaurants'}
-              </h2>
-              <p className="text-sm text-[var(--muted)]">
-                These are now live on the atlas.
-              </p>
-            </div>
-            <button
-              onClick={reset}
-              className="fm-btn text-sm text-[var(--muted)] hover:text-[var(--foreground)]"
-            >
-              Add another
-            </button>
+        <ResultView result={result} onReset={reset} />
+      )}
+    </div>
+  )
+}
+
+function ResultView({
+  result,
+  onReset,
+}: {
+  result: {
+    sourceUrl: string
+    sourceKind: SourceKind
+    restaurants: ResultRestaurant[]
+    mentions: Array<{
+      id: string
+      restaurantId: string
+      dish?: string
+      quote: string
+      timestampSec?: number
+    }>
+  }
+  onReset: () => void
+}) {
+  // Order restaurants by their first-mention timestamp so the polyline is
+  // "the tour the creator took us on."
+  const tsById = new Map(result.mentions.map((m) => [m.restaurantId, m.timestampSec ?? 1e9]))
+  const ordered = [...result.restaurants].sort(
+    (a, b) => (tsById.get(a.id) ?? 1e9) - (tsById.get(b.id) ?? 1e9)
+  )
+
+  const mapRestaurants: Restaurant[] = ordered.map((r) => ({
+    id: r.id,
+    name: r.name,
+    nameLocal: r.nameLocal,
+    city: r.city,
+    country: r.country,
+    lat: r.lat,
+    lng: r.lng,
+    cuisine: r.cuisine,
+    priceLevel: r.priceLevel as 1 | 2 | 3 | 4 | undefined,
+    photoName: r.photoName,
+    mentionCount: 1,
+    topCreators: [],
+  }))
+  const routeOrder = ordered.map((r) => r.id)
+
+  return (
+    <div className="mt-8 bg-white rounded-2xl border border-[var(--border)] p-5">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="font-bold text-lg">
+            Added {result.restaurants.length}{' '}
+            {result.restaurants.length === 1 ? 'restaurant' : 'restaurants'}
+          </h2>
+          <p className="text-sm text-[var(--muted)]">Live on the atlas.</p>
+        </div>
+        <button
+          onClick={onReset}
+          className="fm-btn text-sm text-[var(--muted)] hover:text-[var(--foreground)]"
+        >
+          Add another
+        </button>
+      </div>
+
+      {result.restaurants.length === 0 ? (
+        <p className="text-sm text-[var(--muted)] italic">
+          Nothing extracted — either no restaurants were mentioned, or the AI couldn&apos;t
+          find verbatim quotes to back them up.
+        </p>
+      ) : (
+        <>
+          <div className="rounded-xl overflow-hidden border border-[var(--border)] h-[300px] sm:h-[360px] bg-[var(--muted-soft)] mb-4">
+            <AtlasMap
+              restaurants={mapRestaurants}
+              routeOrder={routeOrder}
+              numbered={true}
+              className="w-full h-full"
+            />
           </div>
 
-          {result.restaurants.length === 0 ? (
-            <p className="text-sm text-[var(--muted)] italic">
-              Nothing extracted — either no restaurants were mentioned, or the AI couldn&apos;t
-              find verbatim quotes to back them up.
-            </p>
-          ) : (
-            <ul className="space-y-2">
-              {result.restaurants.map((r) => {
-                const m = result.mentions.find((m) => m.restaurantId === r.id)
-                const ts = m?.timestampSec
-                const videoUrlWithTime =
-                  ts != null && result.sourceKind === 'youtube'
-                    ? `${result.sourceUrl}&t=${Math.floor(ts)}s`
-                    : result.sourceUrl
-                return (
-                  <li
-                    key={r.id}
-                    className="flex items-start gap-3 p-3 rounded-xl border border-[var(--border)] hover:border-[var(--accent)]/40 transition"
-                  >
-                    <Link
-                      href={`/p/${r.id}`}
-                      className="mt-0.5 w-8 h-8 rounded-lg bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center shrink-0 font-bold text-sm hover:bg-[var(--accent)] hover:text-white transition"
-                      aria-label={`Open ${r.name}`}
-                    >
+          <ol className="space-y-2">
+            {ordered.map((r, idx) => {
+              const m = result.mentions.find((m) => m.restaurantId === r.id)
+              const ts = m?.timestampSec
+              const videoUrlWithTime =
+                ts != null && result.sourceKind === 'youtube'
+                  ? `${result.sourceUrl}&t=${Math.floor(ts)}s`
+                  : result.sourceUrl
+              const photo = photoUrl(r.photoName, 200)
+              return (
+                <li
+                  key={r.id}
+                  className="flex items-stretch gap-3 p-3 rounded-xl border border-[var(--border)] hover:border-[var(--accent)]/40 transition bg-white"
+                >
+                  {photo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={photo}
+                      alt={r.name}
+                      className="w-16 h-16 rounded-lg object-cover bg-[var(--muted-soft)] shrink-0"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-lg bg-[var(--muted-soft)] shrink-0 flex items-center justify-center text-xl">
                       📍
-                    </Link>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Link
-                          href={`/p/${r.id}`}
-                          className="font-semibold hover:text-[var(--accent)] transition"
-                        >
-                          {r.name}
-                        </Link>
-                        {r.nameLocal && (
-                          <span className="text-xs text-[var(--muted)]">{r.nameLocal}</span>
-                        )}
-                      </div>
-                      <div className="text-xs text-[var(--muted)] mt-0.5">
-                        {r.cuisine}
-                        {r.cuisine && ' · '}
-                        {r.city}
-                      </div>
-                      {m && (
-                        <div className="mt-2 flex items-center gap-2 flex-wrap">
-                          <SourceBadge kind={result.sourceKind} size="sm" />
-                          <a
-                            href={videoUrlWithTime}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-xs font-medium text-[var(--accent)] hover:underline"
-                          >
-                            {ts != null && (
-                              <span className="font-mono">{formatTimestamp(ts)}</span>
-                            )}
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                          <span className="text-xs text-[var(--muted)] italic truncate flex-1 min-w-0">
-                            &ldquo;{m.quote.slice(0, 80)}
-                            {m.quote.length > 80 ? '…' : ''}&rdquo;
-                          </span>
-                        </div>
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[var(--accent)] text-white text-[10px] font-bold fm-num">
+                        {idx + 1}
+                      </span>
+                      <Link
+                        href={`/p/${r.id}`}
+                        className="font-semibold hover:text-[var(--accent)] transition"
+                      >
+                        {r.name}
+                      </Link>
+                      {r.nameLocal && (
+                        <span className="text-xs text-[var(--muted)]">{r.nameLocal}</span>
                       )}
                     </div>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-
-          <div className="mt-5 flex gap-2">
-            <Link
-              href="/atlas"
-              className="fm-btn flex-1 inline-flex items-center justify-center gap-1.5 bg-[var(--foreground)] text-[var(--background)] font-semibold py-3 rounded-xl hover:bg-[var(--accent)]"
-            >
-              View on atlas
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-            <button
-              onClick={reset}
-              className="fm-btn px-5 py-3 rounded-xl border border-[var(--border)] hover:border-[var(--foreground)] text-sm font-semibold"
-            >
-              Add another
-            </button>
-          </div>
-        </div>
+                    <div className="text-xs text-[var(--muted)] mt-0.5">
+                      {r.cuisine}
+                      {r.cuisine && ' · '}
+                      {r.city}
+                    </div>
+                    {m && (
+                      <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+                        <SourceBadge kind={result.sourceKind} size="sm" />
+                        <a
+                          href={videoUrlWithTime}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-xs font-medium text-[var(--accent)] hover:underline"
+                        >
+                          {ts != null && (
+                            <span className="font-mono">{formatTimestamp(ts)}</span>
+                          )}
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                        <span className="text-xs text-[var(--muted)] italic truncate flex-1 min-w-0">
+                          &ldquo;{m.quote.slice(0, 80)}
+                          {m.quote.length > 80 ? '…' : ''}&rdquo;
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </li>
+              )
+            })}
+          </ol>
+        </>
       )}
+
+      <div className="mt-5 flex gap-2">
+        <Link
+          href="/atlas"
+          className="fm-btn flex-1 inline-flex items-center justify-center gap-1.5 bg-[var(--foreground)] text-[var(--background)] font-semibold py-3 rounded-xl hover:bg-[var(--accent)]"
+        >
+          View on atlas
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+        <button
+          onClick={onReset}
+          className="fm-btn px-5 py-3 rounded-xl border border-[var(--border)] hover:border-[var(--foreground)] text-sm font-semibold"
+        >
+          Add another
+        </button>
+      </div>
     </div>
   )
 }

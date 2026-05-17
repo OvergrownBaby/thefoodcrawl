@@ -43,6 +43,7 @@ export type Restaurant = {
   cuisine?: string
   priceLevel?: 1 | 2 | 3 | 4
   placesId?: string
+  photoName?: string
   mentionCount: number
   topCreators: Creator[]
 }

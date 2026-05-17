@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { Restaurant } from '@/lib/types'
 import { CreatorAvatar } from './creator-avatar'
 import { priceDots } from '@/lib/utils'
+import { photoUrl } from '@/lib/photo'
 
 export function RestaurantCard({
   restaurant,
@@ -10,11 +11,22 @@ export function RestaurantCard({
   restaurant: Restaurant
   compact?: boolean
 }) {
+  const photo = photoUrl(restaurant.photoName, 400)
   return (
     <Link
       href={`/p/${restaurant.id}`}
-      className="card-soft group block p-5"
+      className="card-soft group block overflow-hidden"
     >
+      {photo && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={photo}
+          alt={restaurant.name}
+          className="w-full h-32 object-cover bg-[var(--muted-soft)]"
+          loading="lazy"
+        />
+      )}
+      <div className="p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="fm-display text-lg leading-tight group-hover:text-[var(--accent)] transition truncate">
@@ -55,6 +67,7 @@ export function RestaurantCard({
           </div>
         </div>
       )}
+      </div>
     </Link>
   )
 }

@@ -8,6 +8,8 @@ export type GeocodeResult = {
   lat: number
   lng: number
   priceLevel?: 1 | 2 | 3 | 4
+  /** Resource name of the first photo, e.g. "places/X/photos/Y" — use via /api/photo. */
+  photoName?: string
 }
 
 /**
@@ -50,7 +52,7 @@ async function callPlaces(args: {
         'X-Goog-Api-Key': key,
         // Field mask: only request the fields we need (cheaper SKU)
         'X-Goog-FieldMask':
-          'places.id,places.displayName,places.formattedAddress,places.location,places.priceLevel,places.types',
+          'places.id,places.displayName,places.formattedAddress,places.location,places.priceLevel,places.types,places.photos',
       },
       body: JSON.stringify({
         textQuery: query,
@@ -84,6 +86,7 @@ async function callPlaces(args: {
         | 'PRICE_LEVEL_VERY_EXPENSIVE'
         | 'PRICE_LEVEL_FREE'
         | 'PRICE_LEVEL_UNSPECIFIED'
+      photos?: Array<{ name: string }>
     }>
   }
 
@@ -104,6 +107,7 @@ async function callPlaces(args: {
     lat: p.location.latitude,
     lng: p.location.longitude,
     priceLevel: p.priceLevel ? priceMap[p.priceLevel] : undefined,
+    photoName: p.photos?.[0]?.name,
   }
 }
 
@@ -123,6 +127,7 @@ async function getCached(key: string): Promise<GeocodeResult | null> {
     lat: data.lat,
     lng: data.lng,
     priceLevel: data.price_level ?? undefined,
+    photoName: data.photo_name ?? undefined,
   }
 }
 
@@ -136,5 +141,6 @@ async function putCache(key: string, result: GeocodeResult | null): Promise<void
     lat: result?.lat ?? null,
     lng: result?.lng ?? null,
     price_level: result?.priceLevel ?? null,
+    photo_name: result?.photoName ?? null,
   })
 }

@@ -79,6 +79,7 @@ export async function ingestUrl(url: string): Promise<PipelineResult> {
       cuisine: r.cuisine ?? null,
       price_level: r.priceLevel ?? geo.priceLevel ?? null,
       places_id: geo.placesId,
+      photo_name: geo.photoName ?? null,
     }
 
     const { data: restaurantRow, error: rErr } = await sb

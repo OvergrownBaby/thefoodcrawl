@@ -38,6 +38,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     cuisine: r.cuisine ?? undefined,
     priceLevel: (r.price_level as 1 | 2 | 3 | 4 | null) ?? undefined,
     placesId: r.places_id ?? undefined,
+    photoName: r.photo_name ?? undefined,
     mentionCount: mentionsRows?.length ?? 0,
     topCreators: [],
   }

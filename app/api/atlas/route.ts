@@ -16,7 +16,7 @@ export async function GET(req: Request) {
   let query = sb
     .from('restaurants')
     .select(
-      `id, name, name_local, city, country, lat, lng, cuisine, price_level, places_id,
+      `id, name, name_local, city, country, lat, lng, cuisine, price_level, places_id, photo_name,
        mentions ( videos ( id, creator_slug, creators ( slug, name, platform, avatar_url, url ) ) )`
     )
     .limit(2000)
@@ -38,6 +38,7 @@ export async function GET(req: Request) {
     cuisine: string | null
     price_level: number | null
     places_id: string | null
+    photo_name: string | null
     mentions: Array<{
       videos: {
         creator_slug: string | null
@@ -82,6 +83,7 @@ export async function GET(req: Request) {
         cuisine: r.cuisine ?? undefined,
         priceLevel: (r.price_level as 1 | 2 | 3 | 4 | null) ?? undefined,
         placesId: r.places_id ?? undefined,
+        photoName: r.photo_name ?? undefined,
         mentionCount,
         topCreators: topCreators.map((c) => ({
           slug: c.slug,

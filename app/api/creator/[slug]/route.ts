@@ -23,7 +23,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
     .select(
       `id, restaurant_id, dish, quote, timestamp_sec, anchor, created_at,
        videos!inner ( id, source_kind, url, title, thumbnail_url, published_at, creator_slug ),
-       restaurants ( id, name, name_local, city, country, lat, lng, cuisine, price_level, places_id )`
+       restaurants ( id, name, name_local, city, country, lat, lng, cuisine, price_level, places_id, photo_name )`
     )
     .eq('videos.creator_slug', slug)
 
@@ -59,6 +59,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
       cuisine: string | null
       price_level: number | null
       places_id: string | null
+      photo_name: string | null
     } | null
   }
   const typedRows = (mentionsRows ?? []) as unknown as Row[]
@@ -78,6 +79,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
         cuisine: r.cuisine ?? undefined,
         priceLevel: (r.price_level as 1 | 2 | 3 | 4 | null) ?? undefined,
         placesId: r.places_id ?? undefined,
+        photoName: r.photo_name ?? undefined,
         mentionCount: 0,
         topCreators: [],
       })
