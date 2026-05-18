@@ -30,11 +30,16 @@ export async function POST(req: Request) {
     req.headers.get('x-real-ip') ||
     null
 
-  // Rate limiting — check before doing any expensive work
+  // BYOK — when the client provides their own Gemini key, they pay for the
+  // expensive call directly. We can skip rate-limiting entirely.
+  const userGeminiKey = req.headers.get('x-gemini-key')?.trim() || null
+  const usingByok = !!userGeminiKey && /^AIza[A-Za-z0-9_-]{30,}$/.test(userGeminiKey)
+
+  // Rate limiting — check before doing any expensive work (server key only)
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
 
-  if (ip) {
+  if (!usingByok && ip) {
     const { count: perIp } = await sb
       .from('jobs')
       .select('id', { count: 'exact', head: true })
@@ -48,26 +53,34 @@ export async function POST(req: Request) {
     }
   }
 
-  const { count: hourly } = await sb
-    .from('jobs')
-    .select('id', { count: 'exact', head: true })
-    .gte('created_at', oneHourAgo)
-  if ((hourly ?? 0) >= PROJECT_PER_HOUR) {
-    return NextResponse.json(
-      { error: 'Crumb is busy right now — too many submissions in the last hour. Try again in a bit.' },
-      { status: 429 }
-    )
-  }
+  if (!usingByok) {
+    const { count: hourly } = await sb
+      .from('jobs')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', oneHourAgo)
+    if ((hourly ?? 0) >= PROJECT_PER_HOUR) {
+      return NextResponse.json(
+        {
+          error:
+            'Crumb is busy right now — too many submissions on the shared server key in the last hour. Try again, or set your own Gemini key to skip the limit.',
+        },
+        { status: 429 }
+      )
+    }
 
-  const { count: daily } = await sb
-    .from('jobs')
-    .select('id', { count: 'exact', head: true })
-    .gte('created_at', oneDayAgo)
-  if ((daily ?? 0) >= PROJECT_PER_DAY) {
-    return NextResponse.json(
-      { error: 'Crumb has hit its daily limit. Submissions reopen tomorrow.' },
-      { status: 429 }
-    )
+    const { count: daily } = await sb
+      .from('jobs')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', oneDayAgo)
+    if ((daily ?? 0) >= PROJECT_PER_DAY) {
+      return NextResponse.json(
+        {
+          error:
+            'Crumb hit its daily limit on the shared server key. Submissions reopen tomorrow — or set your own Gemini key to bypass it.',
+        },
+        { status: 429 }
+      )
+    }
   }
 
   // Create job row up front so the UI can show progress
@@ -86,7 +99,7 @@ export async function POST(req: Request) {
   try {
     await sb.from('jobs').update({ status: 'extracting', progress: 'Watching content...' }).eq('id', job.id)
 
-    const result = await ingestUrl(url)
+    const result = await ingestUrl(url, { geminiKey: usingByok ? userGeminiKey! : undefined })
 
     await sb
       .from('jobs')

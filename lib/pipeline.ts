@@ -17,8 +17,13 @@ export type PipelineResult = {
  * Idempotent: re-running on the same URL will not duplicate restaurants or
  * mentions (we dedup by (name_normalized, city, country) and (restaurant_id,
  * video_id) respectively).
+ *
+ * `geminiKey` optionally overrides the server-side env key — used for BYOK.
  */
-export async function ingestUrl(url: string): Promise<PipelineResult> {
+export async function ingestUrl(
+  url: string,
+  opts: { geminiKey?: string } = {}
+): Promise<PipelineResult> {
   const sb = supabaseAdmin()
 
   // 1. Fetch
@@ -50,7 +55,7 @@ export async function ingestUrl(url: string): Promise<PipelineResult> {
   if (videoErr) throw new Error(`videos upsert: ${videoErr.message}`)
 
   // 3. Extract
-  const extracted = await extractRestaurants(content)
+  const extracted = await extractRestaurants(content, { geminiKey: opts.geminiKey })
   if (extracted.length === 0) {
     return { videoId, restaurantsAdded: 0, mentionsAdded: 0, skippedNoGeocode: 0 }
   }

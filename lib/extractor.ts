@@ -57,9 +57,12 @@ const CLAUDE_MODEL = 'claude-haiku-4-5'
  * after the LLM call: any returned `quote` that isn't a substring of the
  * source material is dropped (anti-hallucination defense).
  */
-export async function extractRestaurants(content: FetchedContent): Promise<ExtractedRestaurant[]> {
+export async function extractRestaurants(
+  content: FetchedContent,
+  opts: { geminiKey?: string } = {}
+): Promise<ExtractedRestaurant[]> {
   if (content.kind === 'video_url') {
-    const result = await extractFromVideoUrl(content.url)
+    const result = await extractFromVideoUrl(content.url, opts.geminiKey)
     // We don't have the transcript locally to validate against, so we trust
     // Gemini's quote here (it has the audio + visuals). This is a known
     // trade-off — see ARCHITECTURE notes for the v2 fix.
@@ -70,8 +73,8 @@ export async function extractRestaurants(content: FetchedContent): Promise<Extra
   }
 }
 
-async function extractFromVideoUrl(url: string): Promise<ExtractedRestaurant[]> {
-  const apiKey = process.env.GEMINI_API_KEY
+async function extractFromVideoUrl(url: string, userKey?: string): Promise<ExtractedRestaurant[]> {
+  const apiKey = userKey || process.env.GEMINI_API_KEY
   if (!apiKey) throw new Error('GEMINI_API_KEY not set')
 
   const parts: GeminiContentPart[] = [

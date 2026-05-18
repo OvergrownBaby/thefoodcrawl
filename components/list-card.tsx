@@ -18,7 +18,7 @@ export function ListCard({ list }: { list: CuratedList }) {
 
   return (
     <Link
-      href={`/c/${list.creatorSlug}?city=${encodeURIComponent(list.city)}`}
+      href={`/c/${list.creatorSlug}/${encodeURIComponent(list.city)}`}
       className="group block bg-[var(--card)] rounded-2xl border border-[var(--border)] overflow-hidden hover:border-[var(--accent)]/40 hover:shadow-md transition flex flex-col"
     >
       {hero ? (

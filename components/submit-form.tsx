@@ -1,14 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import type { SourceKind } from '@/lib/types'
 import { SourceBadge } from './source-badge'
-import { Loader2, Sparkles, Link as LinkIcon, Check, X, ExternalLink, ArrowRight } from 'lucide-react'
+import { Loader2, Sparkles, Link as LinkIcon, Check, X, ExternalLink, ArrowRight, Key } from 'lucide-react'
 import { cn, formatTimestamp } from '@/lib/utils'
 import { AtlasMap } from './atlas-map'
 import { photoUrl } from '@/lib/photo'
 import type { Restaurant } from '@/lib/types'
+import { ByokModal } from './byok-modal'
+import { getStoredKey } from '@/lib/byok'
 
 type Stage = 'idle' | 'fetching' | 'extracting' | 'geocoding' | 'done' | 'failed'
 
@@ -66,6 +68,8 @@ export function SubmitForm() {
   const [url, setUrl] = useState('')
   const [stage, setStage] = useState<Stage>('idle')
   const [error, setError] = useState<string | null>(null)
+  const [keyModalOpen, setKeyModalOpen] = useState(false)
+  const [hasUserKey, setHasUserKey] = useState(false)
   const [result, setResult] = useState<{
     sourceUrl: string
     sourceKind: SourceKind
@@ -79,6 +83,11 @@ export function SubmitForm() {
       timestampSec?: number
     }>
   } | null>(null)
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHasUserKey(!!getStoredKey())
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -95,9 +104,13 @@ export function SubmitForm() {
       // at the API response.
       const stageTimer = stepStages(setStage)
 
+      const headers: Record<string, string> = { 'content-type': 'application/json' }
+      const byok = getStoredKey()
+      if (byok) headers['x-gemini-key'] = byok
+
       const res = await fetch('/api/extract', {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers,
         body: JSON.stringify({ url }),
       })
 
@@ -210,10 +223,31 @@ export function SubmitForm() {
           </button>
         </div>
 
-        <p className="mt-2 text-xs text-[var(--muted)]">
-          Works on YouTube, Reddit, and most articles. Long-form videos can take 1–3 minutes.
-        </p>
+        <div className="mt-2 flex items-center justify-between gap-3 text-xs text-[var(--muted)]">
+          <span className="truncate">
+            Works on YouTube, Reddit, and most articles. Long-form videos can take 1–3 minutes.
+          </span>
+          <button
+            type="button"
+            onClick={() => setKeyModalOpen(true)}
+            className={cn(
+              'shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-md transition',
+              hasUserKey
+                ? 'bg-[var(--accent-soft)] text-[var(--accent)] ring-1 ring-inset ring-[var(--accent)]/20 hover:ring-[var(--accent)]/40'
+                : 'hover:text-[var(--foreground)] hover:bg-[var(--muted-soft)]'
+            )}
+          >
+            <Key className="w-3 h-3" />
+            {hasUserKey ? 'using your key' : 'use your own key'}
+          </button>
+        </div>
       </form>
+
+      <ByokModal
+        open={keyModalOpen}
+        onClose={() => setKeyModalOpen(false)}
+        onChange={setHasUserKey}
+      />
 
       {(busy || stage === 'done' || stage === 'failed') && (
         <div className="mt-8 bg-white rounded-2xl border border-[var(--border)] p-5">
