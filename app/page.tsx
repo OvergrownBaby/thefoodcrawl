@@ -8,26 +8,23 @@ import { getCuratedLists } from '@/lib/lists'
 export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
-  const lists = await getCuratedLists(12)
+  const lists = await getCuratedLists(8)
 
   return (
     <div className="flex-1">
-      {/* Hero — composer-first, single voice */}
-      <section className="mx-auto max-w-4xl px-4 sm:px-6 pt-16 pb-12 lg:pt-24 lg:pb-16">
-        <h1 className="fm-display text-3xl sm:text-5xl lg:text-6xl leading-[1.05] sm:leading-[1.02]">
-          Restaurants from <RotatingText /> you <em>actually</em> trust.
-        </h1>
-        <p className="mt-5 text-[var(--muted)] max-w-xl leading-relaxed">
-          Paste a YouTube video, a Reddit thread, an Eater list. We watch or read
-          it, find every restaurant, pin them on a map — with the exact line and
-          timestamp it was said.
-        </p>
-
-        <div className="mt-8">
-          <SubmitForm />
+      {/* Composer-first. Tagline lives below as a small line, not a hero block. */}
+      <section className="mx-auto max-w-3xl px-4 sm:px-6 pt-10 sm:pt-14 pb-8">
+        <div className="text-center sm:text-left">
+          <h1 className="fm-display text-2xl sm:text-3xl leading-tight text-[var(--foreground-soft)]">
+            Drop a food video, get a map.
+          </h1>
         </div>
 
-        <div className="mt-5 flex items-center gap-x-3 gap-y-1 text-[11px] text-[var(--muted)] flex-wrap">
+        <div className="mt-5">
+          <SubmitForm showPresets />
+        </div>
+
+        <div className="mt-5 flex items-center justify-center sm:justify-start gap-x-3 gap-y-1 text-[11px] text-[var(--muted)] flex-wrap">
           <a
             href="https://github.com/OvergrownBaby/thefoodcrawl"
             target="_blank"
@@ -40,39 +37,36 @@ export default async function HomePage() {
           <span className="opacity-40">·</span>
           <span>agpl-3.0</span>
           <span className="opacity-40">·</span>
-          <span>no tracking, no ads, no subscription</span>
+          <span>no tracking · no ads · no subscription</span>
         </div>
+
+        {/* Tagline — quiet, below the composer, not the hero */}
+        <p className="mt-8 text-center text-sm text-[var(--muted)] italic">
+          Restaurants from <RotatingText /> you actually trust.
+        </p>
       </section>
 
-      {/* Lists by people — the browse hook */}
+      {/* Recently parsed — social proof, not editorial. Dense, small. */}
       {lists.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 sm:px-6 py-10 lg:py-14 border-t border-[var(--border)]">
-          <div className="flex items-end justify-between mb-6 max-w-4xl">
+          <div className="flex items-end justify-between mb-5 max-w-4xl">
             <div>
               <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--muted)] font-semibold">
-                The Issue
+                Recently parsed
               </p>
-              <h2 className="fm-display text-3xl lg:text-4xl mt-1">
-                What they ate, where.
-              </h2>
+              <h2 className="mt-1 text-xl font-semibold">What people have dropped in.</h2>
             </div>
             <Link
               href="/atlas"
               className="text-sm font-medium text-[var(--foreground-soft)] hover:text-[var(--accent)] hidden sm:inline-flex items-center gap-1"
             >
-              everything on a map →
+              all on a map →
             </Link>
           </div>
 
-          {/* Asymmetric grid — featured 2x2 hero card + smaller siblings. */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:auto-rows-fr">
-            {lists.map((l, i) => (
-              <div
-                key={`${l.creatorSlug}-${l.city}`}
-                className={i === 0 ? 'sm:col-span-2 sm:row-span-2 lg:col-span-2 lg:row-span-2' : ''}
-              >
-                <ListCard list={l} featured={i === 0} />
-              </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {lists.map((l) => (
+              <ListCard key={`${l.creatorSlug}-${l.city}`} list={l} />
             ))}
           </div>
         </section>

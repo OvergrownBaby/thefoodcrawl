@@ -64,7 +64,26 @@ type ExtractResponse = {
   error?: string
 }
 
-export function SubmitForm() {
+const PRESETS: Array<{ label: string; url: string }> = [
+  {
+    label: "Mark Wiens · HK typhoon crab",
+    url: 'https://www.youtube.com/watch?v=z-iAddtjM7A',
+  },
+  {
+    label: 'Mark Wiens · Malaysia spice',
+    url: 'https://www.youtube.com/watch?v=bF1VamLDso4',
+  },
+  {
+    label: 'Mark Wiens · Texas BBQ',
+    url: 'https://www.youtube.com/watch?v=3n227UzYczY',
+  },
+]
+
+export function SubmitForm({
+  showPresets = false,
+}: {
+  showPresets?: boolean
+} = {}) {
   const [url, setUrl] = useState('')
   const [stage, setStage] = useState<Stage>('idle')
   const [error, setError] = useState<string | null>(null)
@@ -223,7 +242,25 @@ export function SubmitForm() {
           </button>
         </div>
 
-        <div className="mt-2 flex items-center justify-between gap-3 text-xs text-[var(--muted)]">
+        {showPresets && !busy && stage !== 'done' && (
+          <div className="mt-3 flex items-center flex-wrap gap-2">
+            <span className="text-[11px] text-[var(--muted)] uppercase tracking-wider font-medium">
+              try:
+            </span>
+            {PRESETS.map((p) => (
+              <button
+                key={p.url}
+                type="button"
+                onClick={() => setUrl(p.url)}
+                className="fm-btn px-2.5 py-1 rounded-full bg-[var(--muted-soft)] hover:bg-[var(--background-elev)] border border-[var(--border)] hover:border-[var(--accent)]/40 text-xs text-[var(--foreground-soft)] hover:text-[var(--foreground)] transition"
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-3 flex items-center justify-between gap-3 text-xs text-[var(--muted)]">
           <span className="truncate">
             Works on YouTube, Reddit, and most articles. Long-form videos can take 1–3 minutes.
           </span>

@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
-import { LogoMark } from './logo-mark'
 import { GithubIcon } from './icons'
 
 export function SiteHeader() {
@@ -9,11 +8,10 @@ export function SiteHeader() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 h-14 flex items-center justify-between">
         <Link
           href="/"
-          className="flex items-center gap-2 fm-btn fm-focus rounded-lg pr-1"
+          className="fm-btn fm-focus rounded-lg px-1"
         >
-          <LogoMark className="w-7 h-7" />
-          <span className="font-semibold text-[var(--foreground)] -tracking-[0.01em]">
-            Foodcrawl
+          <span className="fm-display text-[22px] font-semibold text-[var(--foreground)] -tracking-[0.03em] leading-none">
+            foodcrawl
           </span>
         </Link>
 
