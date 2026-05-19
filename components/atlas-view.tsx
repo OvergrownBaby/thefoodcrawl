@@ -64,9 +64,9 @@ export function AtlasView({ restaurants, creators }: Props) {
   const visibleMentions = effectiveSelectedId ? selectedMentions : []
 
   return (
-    <div className="flex-1 flex flex-col lg:flex-row min-h-0">
-      {/* Sidebar */}
-      <aside className="lg:w-80 xl:w-96 border-r border-[var(--border)] bg-[var(--background)] flex flex-col">
+    <div className="flex-1 flex flex-col-reverse lg:flex-row min-h-0">
+      {/* Sidebar — under the map on mobile (flex-col-reverse), left on desktop */}
+      <aside className="lg:w-80 xl:w-96 max-h-[60vh] lg:max-h-none border-t lg:border-t-0 lg:border-r border-[var(--border)] bg-[var(--background)] flex flex-col">
         <div className="p-5 border-b border-[var(--border)]">
           <div className="fm-label">Browse</div>
           <h1 className="fm-display text-2xl mt-1">Atlas</h1>

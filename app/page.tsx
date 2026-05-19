@@ -14,7 +14,7 @@ export default async function HomePage() {
     <div className="flex-1">
       {/* Hero — composer-first, single voice */}
       <section className="mx-auto max-w-4xl px-4 sm:px-6 pt-16 pb-12 lg:pt-24 lg:pb-16">
-        <h1 className="fm-display text-[40px] sm:text-5xl lg:text-6xl leading-[1.02]">
+        <h1 className="fm-display text-3xl sm:text-5xl lg:text-6xl leading-[1.05] sm:leading-[1.02]">
           Restaurants from <RotatingText /> you <em>actually</em> trust.
         </h1>
         <p className="mt-5 text-[var(--muted)] max-w-xl leading-relaxed">
@@ -65,7 +65,7 @@ export default async function HomePage() {
           </div>
 
           {/* Asymmetric grid — featured 2x2 hero card + smaller siblings. */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-fr">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:auto-rows-fr">
             {lists.map((l, i) => (
               <div
                 key={`${l.creatorSlug}-${l.city}`}

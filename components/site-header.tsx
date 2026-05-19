@@ -26,7 +26,7 @@ export function SiteHeader() {
           </Link>
           <Link
             href="/c/mark-wiens"
-            className="fm-btn fm-focus px-3 py-1.5 rounded-md text-[var(--foreground-soft)] hover:text-[var(--foreground)] hover:bg-[var(--muted-soft)]"
+            className="hidden sm:inline-flex fm-btn fm-focus px-3 py-1.5 rounded-md text-[var(--foreground-soft)] hover:text-[var(--foreground)] hover:bg-[var(--muted-soft)]"
           >
             Creators
           </Link>
