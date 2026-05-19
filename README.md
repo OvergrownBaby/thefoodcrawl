@@ -142,7 +142,7 @@ is the [v1.5 fix](#-roadmap).
 | Verbatim-quote anti-hallucination | ✅ live |
 | Geocoding + Postgres cache | ✅ live |
 | Photos via Google Places (proxied) | ✅ live |
-| Map with route polyline + numbered pins | ✅ live |
+| Map with numbered pins | ✅ live |
 | Reddit + article fetchers | 🚧 code exists, gated off at launch |
 | TikTok / Instagram Reels | ⏳ needs yt-dlp + residential proxies |
 | Long-form video chunking (>1h) | ⏳ v1.5 |

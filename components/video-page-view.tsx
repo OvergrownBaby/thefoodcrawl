@@ -78,8 +78,6 @@ export function VideoPageView({
     [mentions]
   )
 
-  const routeOrder = useMemo(() => restaurants.map((r) => r.id), [restaurants])
-
   const selectedMention = useMemo(
     () => (selectedId ? mentions.find((m) => m.restaurant.id === selectedId) ?? null : null),
     [selectedId, mentions]
@@ -224,7 +222,6 @@ export function VideoPageView({
             selectedId={selectedId}
             onSelect={setSelectedId}
             numbered
-            routeOrder={routeOrder}
             className="absolute inset-0"
           />
           {selectedMention && (

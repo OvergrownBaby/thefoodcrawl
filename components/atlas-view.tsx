@@ -18,6 +18,12 @@ export function AtlasView({ restaurants, creators }: Props) {
   const [activeCreator, setActiveCreator] = useState<string | null>(null)
   const [selectedMentions, setSelectedMentions] = useState<Mention[]>([])
   const [loadingMentions, setLoadingMentions] = useState(false)
+  // Hover preview lives in a portal-style fixed position so it escapes the
+  // sidebar's overflow-y-auto clip box. Position is computed from the LI's
+  // bounding rect on mouseenter.
+  const [hover, setHover] = useState<{ video: RestaurantVideo; top: number; left: number } | null>(
+    null
+  )
 
   // Source filter — we don't have mentions on the client until pin click,
   // so source filtering happens on a separate fetch path. For now: only
@@ -129,7 +135,20 @@ export function AtlasView({ restaurants, creators }: Props) {
         <div className="flex-1 overflow-y-auto p-2">
           <ul className="space-y-1">
             {filtered.map((r) => (
-              <li key={r.id} className="group/item relative">
+              <li
+                key={r.id}
+                className="relative"
+                onMouseEnter={(e) => {
+                  if (!r.primaryVideo?.thumbnailUrl) return
+                  const rect = e.currentTarget.getBoundingClientRect()
+                  setHover({
+                    video: r.primaryVideo,
+                    top: rect.top + rect.height / 2,
+                    left: rect.right + 12,
+                  })
+                }}
+                onMouseLeave={() => setHover(null)}
+              >
                 <button
                   onClick={() => setSelectedId(r.id)}
                   className={cn(
@@ -174,14 +193,14 @@ export function AtlasView({ restaurants, creators }: Props) {
                   </div>
                 </button>
 
-                {r.primaryVideo?.thumbnailUrl && (
-                  <VideoHoverPreview video={r.primaryVideo} />
-                )}
               </li>
             ))}
           </ul>
         </div>
       </aside>
+
+      {/* Hover preview — fixed-position so it escapes the list's overflow clip */}
+      {hover && <VideoHoverPreview video={hover.video} top={hover.top} left={hover.left} />}
 
       {/* Map */}
       <div className="flex-1 relative min-h-[55vh] lg:min-h-0">
@@ -206,15 +225,22 @@ export function AtlasView({ restaurants, creators }: Props) {
   )
 }
 
-function VideoHoverPreview({ video }: { video: RestaurantVideo }) {
-  // Position: floats to the right of the list item on lg+, above on mobile.
-  // group-hover/item-driven; pointer-events-none so it doesn't intercept clicks.
+function VideoHoverPreview({
+  video,
+  top,
+  left,
+}: {
+  video: RestaurantVideo
+  top: number
+  left: number
+}) {
   return (
     <div
-      className="pointer-events-none absolute z-20 left-full ml-3 top-1/2 -translate-y-1/2 w-64 opacity-0 -translate-x-2 transition-all duration-150 group-hover/item:opacity-100 group-hover/item:translate-x-0 hidden lg:block"
+      className="pointer-events-none fixed z-50 w-64 hidden lg:block"
+      style={{ top, left, transform: 'translateY(-50%)' }}
       aria-hidden
     >
-      <div className="bg-white rounded-xl shadow-[var(--shadow-pop)] border border-[var(--border)] overflow-hidden">
+      <div className="bg-white rounded-xl shadow-[var(--shadow-pop)] border border-[var(--border)] overflow-hidden animate-in fade-in slide-in-from-left-1 duration-150">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={video.thumbnailUrl}

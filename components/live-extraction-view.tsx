@@ -59,11 +59,6 @@ export function LiveExtractionView({
     [geocoded]
   )
 
-  const routeOrder = useMemo(
-    () => geocoded.map((r) => r.id!).filter(Boolean),
-    [geocoded]
-  )
-
   const phaseLabel = phaseLabelFor(state)
 
   return (
@@ -134,7 +129,6 @@ export function LiveExtractionView({
               <AtlasMap
                 restaurants={mapRestaurants}
                 numbered
-                routeOrder={routeOrder}
                 className="absolute inset-0"
               />
             ) : (
