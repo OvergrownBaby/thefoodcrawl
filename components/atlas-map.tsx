@@ -219,13 +219,12 @@ export function AtlasMap({
           source: 'fm-route',
           paint: {
             'line-color': '#DA3F2A',
-            'line-width': 2.5,
-            'line-opacity': 0.7,
-            // True dotted (round-cap "dashes" of length 0 = circles), spaced
-            // 2 line-widths apart. Avoids the [2,2] dash-pattern issue where
-            // segment endpoints could land in a gap, making the line appear
-            // to not reach the pin.
-            'line-dasharray': [0, 2],
+            'line-width': 3,
+            'line-opacity': 0.85,
+            // Tiny dash + wide gap + round caps → crisp dot pattern. Using a
+            // non-zero dash length avoids the [0,N] renderer quirk where some
+            // GPUs drop the dash entirely.
+            'line-dasharray': [0.4, 2.2],
           },
           layout: {
             'line-cap': 'round',
