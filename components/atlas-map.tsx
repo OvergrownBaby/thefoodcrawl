@@ -17,6 +17,9 @@ type Props = {
   className?: string
   // Number each pin (1,2,3...) by its index in `restaurants`.
   numbered?: boolean
+  // Render as a 3D globe (Radio Garden style) instead of flat Mercator.
+  // Useful when pins span multiple continents.
+  globe?: boolean
 }
 
 const TILE_STYLE: maplibregl.StyleSpecification = {
@@ -58,6 +61,7 @@ export function AtlasMap({
   interactive = true,
   className,
   numbered = false,
+  globe = false,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MLMap | null>(null)
@@ -67,8 +71,10 @@ export function AtlasMap({
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
 
-    const initCenter: [number, number] = center ?? [114.17, 22.30] // HK
-    const initZoom = zoom ?? 11
+    // Globe defaults: zoom out and center over food-content gravity (SE Asia).
+    // 2D defaults: HK at street-level zoom.
+    const initCenter: [number, number] = center ?? (globe ? [100, 15] : [114.17, 22.30])
+    const initZoom = zoom ?? (globe ? 1.8 : 11)
 
     const map = new maplibregl.Map({
       container: containerRef.current,
@@ -78,6 +84,8 @@ export function AtlasMap({
       attributionControl: { compact: true },
       interactive,
       renderWorldCopies: false,
+      // Radio Garden style: spinnable 3D globe for cross-continent atlases.
+      ...(globe ? { projection: { type: 'globe' as const } } : {}),
     })
 
     if (interactive) {
@@ -175,11 +183,21 @@ export function AtlasMap({
       }
     }
 
-    // Fit bounds if there are markers
+    // Fit bounds if there are markers — but on a globe, skip the fit when
+    // pins span continents. Otherwise Mercator's auto-fit zooms out and
+    // squashes everything into a horizontal strip. Keep the spinnable
+    // default view and let the user rotate to find their region.
     if (restaurants.length > 1 && !selectedId) {
-      const bounds = new maplibregl.LngLatBounds()
-      for (const r of restaurants) bounds.extend([r.lng, r.lat])
-      map.fitBounds(bounds, { padding: 80, duration: 500, maxZoom: 14 })
+      const lngs = restaurants.map((r) => r.lng)
+      const lats = restaurants.map((r) => r.lat)
+      const lngSpan = Math.max(...lngs) - Math.min(...lngs)
+      const latSpan = Math.max(...lats) - Math.min(...lats)
+      const tooSpread = globe && (lngSpan > 30 || latSpan > 30)
+      if (!tooSpread) {
+        const bounds = new maplibregl.LngLatBounds()
+        for (const r of restaurants) bounds.extend([r.lng, r.lat])
+        map.fitBounds(bounds, { padding: 80, duration: 500, maxZoom: 14 })
+      }
     } else if (restaurants.length === 1) {
       map.flyTo({ center: [restaurants[0].lng, restaurants[0].lat], zoom: 14, duration: 500 })
     }

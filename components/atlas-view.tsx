@@ -208,6 +208,7 @@ export function AtlasView({ restaurants, creators }: Props) {
           restaurants={filtered}
           selectedId={effectiveSelectedId}
           onSelect={setSelectedId}
+          globe
           className="absolute inset-0"
         />
 
