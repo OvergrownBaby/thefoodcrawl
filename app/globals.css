@@ -95,8 +95,8 @@ body {
 /* MapLibre tweaks */
 .maplibregl-canvas {
   outline: none;
-  /* Warm-paper tint so the pins pop, less "google maps" feel */
-  filter: saturate(0.78) hue-rotate(-4deg) brightness(1.02);
+  /* Slight warm wash to keep Positron from feeling clinical */
+  filter: sepia(0.04) saturate(0.95);
 }
 .maplibregl-ctrl-attrib {
   font-size: 10px !important;
@@ -331,15 +331,24 @@ body {
   color: var(--muted);
 }
 
-/* Display heading helper — tight, heavy sans */
+/* Display heading helper — editorial serif. Used only on hero / list
+   card titles / place hero. UI everywhere else stays Geist sans. */
 .fm-display {
-  font-family: var(--font-sans);
-  font-weight: 700;
-  letter-spacing: -0.025em;
-  font-feature-settings: "ss01" on, "cv11" on;
+  font-family: var(--font-display), ui-serif, Georgia, serif;
+  font-weight: 600;
+  letter-spacing: -0.018em;
+  font-feature-settings: "ss01" on;
 }
 .fm-display em {
-  font-style: normal;
+  font-style: italic;
+  font-weight: 500;
+}
+
+/* Photo treatment — unify wildly inconsistent Google Places JPEGs.
+   Slight desat, micro contrast boost, tiny warm shift. Makes the grid
+   feel like it was shot for one magazine instead of scraped from 20. */
+.fm-photo {
+  filter: saturate(0.88) contrast(1.04) brightness(0.99);
 }
 
 /* Soft inner-glow ring */

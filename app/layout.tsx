@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, JetBrains_Mono } from "next/font/google";
+import { Geist, JetBrains_Mono, Newsreader } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
@@ -7,6 +7,16 @@ import { SiteFooter } from "@/components/site-footer";
 const geistSans = Geist({
   variable: "--font-sans",
   subsets: ["latin"],
+});
+
+// Clean, modern editorial serif — used for display copy only.
+// Sharper than Fraunces (which the user vetoed). Looks at home in
+// the NYT / The Atlantic / Eater editorial register.
+const newsreader = Newsreader({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
 });
 
 const mono = JetBrains_Mono({
@@ -61,7 +71,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${mono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${newsreader.variable} ${mono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <SiteHeader />

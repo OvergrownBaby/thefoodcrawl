@@ -14,12 +14,13 @@ export default async function HomePage() {
     <div className="flex-1">
       {/* Hero — composer-first, single voice */}
       <section className="mx-auto max-w-4xl px-4 sm:px-6 pt-16 pb-12 lg:pt-24 lg:pb-16">
-        <h1 className="fm-display text-[40px] sm:text-5xl lg:text-6xl leading-[1.0] -tracking-[0.03em]">
-          Restaurants from <RotatingText /> you actually trust.
+        <h1 className="fm-display text-[40px] sm:text-5xl lg:text-6xl leading-[1.02]">
+          Restaurants from <RotatingText /> you <em>actually</em> trust.
         </h1>
         <p className="mt-5 text-[var(--muted)] max-w-xl leading-relaxed">
-          Drop a YouTube link, a TikTok, a Reddit thread, an Eater list. The AI watches
-          or reads it, finds every restaurant, drops them on a map with the verbatim quote.
+          Paste a YouTube video, a Reddit thread, an Eater list. We watch or read
+          it, find every restaurant, pin them on a map — with the exact line and
+          timestamp it was said.
         </p>
 
         <div className="mt-8">
@@ -48,23 +49,30 @@ export default async function HomePage() {
         <section className="mx-auto max-w-7xl px-4 sm:px-6 py-10 lg:py-14 border-t border-[var(--border)]">
           <div className="flex items-end justify-between mb-6 max-w-4xl">
             <div>
-              <h2 className="text-2xl font-bold -tracking-[0.01em]">Lists from the people</h2>
-              <p className="text-sm text-[var(--muted)] mt-1 max-w-md">
-                Each is a city someone you trust has eaten through. Open one to see what
-                they said about each place.
+              <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--muted)] font-semibold">
+                The Issue
               </p>
+              <h2 className="fm-display text-3xl lg:text-4xl mt-1">
+                What they ate, where.
+              </h2>
             </div>
             <Link
               href="/atlas"
               className="text-sm font-medium text-[var(--foreground-soft)] hover:text-[var(--accent)] hidden sm:inline-flex items-center gap-1"
             >
-              all on a map →
+              everything on a map →
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {lists.map((l) => (
-              <ListCard key={`${l.creatorSlug}-${l.city}`} list={l} />
+          {/* Asymmetric grid — featured 2x2 hero card + smaller siblings. */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-fr">
+            {lists.map((l, i) => (
+              <div
+                key={`${l.creatorSlug}-${l.city}`}
+                className={i === 0 ? 'sm:col-span-2 sm:row-span-2 lg:col-span-2 lg:row-span-2' : ''}
+              >
+                <ListCard list={l} featured={i === 0} />
+              </div>
             ))}
           </div>
         </section>

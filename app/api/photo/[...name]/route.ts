@@ -10,7 +10,7 @@ export const runtime = 'nodejs'
  * We pin maxHeightPx server-side so callers can't abuse this for arbitrary
  * sizes (each fetch costs us a Places photo billing event).
  */
-const ALLOWED_HEIGHTS = new Set([200, 400, 800])
+const ALLOWED_HEIGHTS = new Set([200, 400, 800, 1200])
 
 export async function GET(
   req: Request,

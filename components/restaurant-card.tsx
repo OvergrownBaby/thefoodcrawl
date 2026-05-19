@@ -22,14 +22,14 @@ export function RestaurantCard({
         <img
           src={photo}
           alt={restaurant.name}
-          className="w-full h-32 object-cover bg-[var(--muted-soft)]"
+          className="w-full h-32 object-cover bg-[var(--muted-soft)] fm-photo"
           loading="lazy"
         />
       )}
       <div className="p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="fm-display text-lg leading-tight group-hover:text-[var(--accent)] transition truncate">
+          <h3 className="fm-display text-xl leading-tight group-hover:text-[var(--accent)] transition truncate">
             {restaurant.name}
           </h3>
           {restaurant.nameLocal && (

@@ -59,7 +59,7 @@ export default async function PlacePage({
                 <img
                   src={hero}
                   alt={restaurant.name}
-                  className="w-full h-56 object-cover bg-[var(--muted-soft)]"
+                  className="w-full h-56 object-cover bg-[var(--muted-soft)] fm-photo"
                 />
               )}
               <div className="p-6">

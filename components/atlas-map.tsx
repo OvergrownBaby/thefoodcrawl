@@ -27,10 +27,12 @@ const TILE_STYLE: maplibregl.StyleSpecification = {
     osm: {
       type: 'raster',
       tiles: [
-        // Carto Voyager — warm, clean, free for non-commercial. Good for v1.
-        'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-        'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-        'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+        // Carto Positron — clean cream-grey base with minimal color so the
+        // cinnabar pins are unambiguously the dominant color on screen.
+        // Used by editorial map projects (Eater-style) for the same reason.
+        'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+        'https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+        'https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
       ],
       tileSize: 256,
       attribution: '© OpenStreetMap contributors · © CARTO',
