@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import type { Restaurant, Mention, Creator } from '@/lib/types'
+import type { Restaurant, RestaurantVideo, Mention, Creator } from '@/lib/types'
 import { AtlasMap } from './atlas-map'
 import { CreatorAvatar } from './creator-avatar'
 import { SourceBadge } from './source-badge'
@@ -129,7 +129,7 @@ export function AtlasView({ restaurants, creators }: Props) {
         <div className="flex-1 overflow-y-auto p-2">
           <ul className="space-y-1">
             {filtered.map((r) => (
-              <li key={r.id}>
+              <li key={r.id} className="group/item relative">
                 <button
                   onClick={() => setSelectedId(r.id)}
                   className={cn(
@@ -150,6 +150,14 @@ export function AtlasView({ restaurants, creators }: Props) {
                       <div className="mt-0.5 text-[11px] text-[var(--muted)] truncate">
                         {r.cuisine}
                       </div>
+                      {r.primaryVideo && (
+                        <div className="mt-1 flex items-center gap-1 text-[10px] text-[var(--muted)] min-w-0">
+                          <SourceBadge kind={r.primaryVideo.sourceKind} size="sm" />
+                          <span className="truncate">
+                            {r.primaryVideo.title ?? r.primaryVideo.channelName ?? 'Source video'}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <div className="flex flex-col items-end gap-1 shrink-0">
                       {r.priceLevel && (
@@ -165,6 +173,10 @@ export function AtlasView({ restaurants, creators }: Props) {
                     </div>
                   </div>
                 </button>
+
+                {r.primaryVideo?.thumbnailUrl && (
+                  <VideoHoverPreview video={r.primaryVideo} />
+                )}
               </li>
             ))}
           </ul>
@@ -189,6 +201,36 @@ export function AtlasView({ restaurants, creators }: Props) {
             onClose={() => setSelectedId(null)}
           />
         )}
+      </div>
+    </div>
+  )
+}
+
+function VideoHoverPreview({ video }: { video: RestaurantVideo }) {
+  // Position: floats to the right of the list item on lg+, above on mobile.
+  // group-hover/item-driven; pointer-events-none so it doesn't intercept clicks.
+  return (
+    <div
+      className="pointer-events-none absolute z-20 left-full ml-3 top-1/2 -translate-y-1/2 w-64 opacity-0 -translate-x-2 transition-all duration-150 group-hover/item:opacity-100 group-hover/item:translate-x-0 hidden lg:block"
+      aria-hidden
+    >
+      <div className="bg-white rounded-xl shadow-[var(--shadow-pop)] border border-[var(--border)] overflow-hidden">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={video.thumbnailUrl}
+          alt=""
+          className="w-full aspect-video object-cover bg-black"
+        />
+        <div className="px-3 py-2">
+          <div className="text-xs font-semibold line-clamp-2 leading-snug">
+            {video.title ?? 'Source video'}
+          </div>
+          {video.channelName && (
+            <div className="mt-1 text-[10px] text-[var(--muted)] truncate">
+              {video.channelName}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

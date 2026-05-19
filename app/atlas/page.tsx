@@ -9,5 +9,9 @@ export const metadata = {
 
 export default async function AtlasPage() {
   const [restaurants, creators] = await Promise.all([getAtlas(), listCreators()])
-  return <AtlasView restaurants={restaurants} creators={creators} />
+  return (
+    <div className="h-[calc(100dvh-3.5rem)] flex">
+      <AtlasView restaurants={restaurants} creators={creators} />
+    </div>
+  )
 }

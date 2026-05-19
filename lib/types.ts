@@ -32,6 +32,15 @@ export type Source = {
   creator?: Creator
 }
 
+export type RestaurantVideo = {
+  id: string
+  url: string
+  sourceKind: SourceKind
+  title?: string
+  thumbnailUrl?: string
+  channelName?: string
+}
+
 export type Restaurant = {
   id: string
   name: string
@@ -46,6 +55,8 @@ export type Restaurant = {
   photoName?: string
   mentionCount: number
   topCreators: Creator[]
+  /** Most recent source video for this restaurant — used by atlas list hover preview. */
+  primaryVideo?: RestaurantVideo
 }
 
 export type DishMention = {

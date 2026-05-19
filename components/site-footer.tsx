@@ -1,8 +1,14 @@
+'use client'
+
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { Heart } from 'lucide-react'
 import { GithubIcon } from './icons'
 
 export function SiteFooter() {
+  const pathname = usePathname()
+  if (pathname === '/atlas') return null
+
   return (
     <footer className="border-t border-[var(--border)] bg-[var(--background)]/40 mt-auto">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10 grid sm:grid-cols-3 gap-6 text-sm">

@@ -157,6 +157,17 @@ async function extractFromVideoUrl(
     candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>
   }
 
+  // Debug: log the raw Gemini response so we can audit what it actually said
+  // vs. what we ended up storing. Gated on env var so prod stays quiet.
+  if (process.env.LOG_GEMINI_RAW === '1') {
+    const rawText = data.candidates?.[0]?.content?.parts
+      ?.map((p) => p.text)
+      .filter(Boolean)
+      .join('\n')
+      .trim()
+    console.log(`[gemini:raw] ${url}\n${rawText}\n[/gemini:raw]`)
+  }
+
   const text = data.candidates?.[0]?.content?.parts
     ?.map((p) => p.text)
     .filter(Boolean)

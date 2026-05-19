@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import maplibregl, { Map as MLMap, Marker } from 'maplibre-gl'
 import type { Restaurant } from '@/lib/types'
+import { photoUrl } from '@/lib/photo'
 
 type Props = {
   restaurants: Restaurant[]
@@ -124,10 +125,37 @@ export function AtlasMap({
       if (el instanceof HTMLAnchorElement) el.href = `/p/${r.id}`
       el.className = 'fm-marker'
       el.title = r.name
+
+      const photoSrc = photoUrl(r.photoName, 400)
+      const photoBlock = photoSrc
+        ? `<span class="fm-marker-card-photo"><img data-src="${photoSrc}" alt="" loading="lazy" /></span>`
+        : ''
+
       el.innerHTML = `
         <span class="fm-marker-pin">${badge}</span>
-        <span class="fm-marker-label">${escapeHtml(r.name)}</span>
+        <span class="fm-marker-card">
+          ${photoBlock}
+          <span class="fm-marker-card-meta">
+            <span class="fm-marker-card-name">${escapeHtml(r.name)}</span>
+            <span class="fm-marker-card-city">${escapeHtml(r.city)}</span>
+          </span>
+        </span>
       `
+
+      // Lazy-load the photo only when the user actually hovers, so a map with
+      // 100+ pins doesn't fetch 100+ images on initial render.
+      if (photoSrc) {
+        const onceLoad = () => {
+          const img = el.querySelector('img[data-src]') as HTMLImageElement | null
+          if (img?.dataset.src) {
+            img.src = img.dataset.src
+            delete img.dataset.src
+          }
+        }
+        el.addEventListener('mouseenter', onceLoad, { once: true })
+        el.addEventListener('focus', onceLoad, { once: true })
+      }
+
       if (onSelect) {
         el.addEventListener('click', (e) => {
           e.stopPropagation()
@@ -192,8 +220,12 @@ export function AtlasMap({
           paint: {
             'line-color': '#DA3F2A',
             'line-width': 2.5,
-            'line-opacity': 0.65,
-            'line-dasharray': [2, 2],
+            'line-opacity': 0.7,
+            // True dotted (round-cap "dashes" of length 0 = circles), spaced
+            // 2 line-widths apart. Avoids the [2,2] dash-pattern issue where
+            // segment endpoints could land in a gap, making the line appear
+            // to not reach the pin.
+            'line-dasharray': [0, 2],
           },
           layout: {
             'line-cap': 'round',
