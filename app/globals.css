@@ -110,13 +110,17 @@ body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 0 0 1px var(--border) !important;
 }
 
-/* Map pins — iOS Maps "white ring + colored dot". Sleek but visible. */
+/* Map pins — iOS Maps "white ring + colored dot". Sleek but visible.
+ * NOTE: do NOT set `position: relative` here. MapLibre's `.maplibregl-marker`
+ * sets `position: absolute` so every marker is independently placed at its
+ * geo-projected screen pixel. Overriding to relative makes markers fall back
+ * into document flow and stack vertically (22px apart) when two pins share a
+ * pixel — which produces a fake "vertical column" of pins per city. */
 .fm-marker {
   background: transparent;
   border: none;
   padding: 0;
   cursor: pointer;
-  position: relative;
   width: 22px;
   height: 22px;
   display: block;
