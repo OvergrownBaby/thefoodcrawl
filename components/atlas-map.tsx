@@ -76,17 +76,34 @@ export function AtlasMap({
     const initCenter: [number, number] = center ?? (globe ? [100, 15] : [114.17, 22.30])
     const initZoom = zoom ?? (globe ? 1.8 : 11)
 
+    // MapLibre v5: the canonical place for `projection` is inside the style
+    // spec, not the Map constructor. Setting it on the style guarantees the
+    // globe is active by the first paint.
+    const styleSpec: maplibregl.StyleSpecification = globe
+      ? { ...TILE_STYLE, projection: { type: 'globe' } }
+      : TILE_STYLE
+
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: TILE_STYLE,
+      style: styleSpec,
       center: initCenter,
       zoom: initZoom,
       attributionControl: { compact: true },
       interactive,
       renderWorldCopies: false,
-      // Radio Garden style: spinnable 3D globe for cross-continent atlases.
-      ...(globe ? { projection: { type: 'globe' as const } } : {}),
     })
+
+    // Belt-and-suspenders: also call setProjection in case the style spec
+    // option is silently dropped by older MapLibre minor versions.
+    if (globe) {
+      map.once('style.load', () => {
+        try {
+          map.setProjection({ type: 'globe' })
+        } catch {
+          // older versions throw — fine, the style spec already set it
+        }
+      })
+    }
 
     if (interactive) {
       map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
