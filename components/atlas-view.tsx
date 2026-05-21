@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
 import type { Restaurant, RestaurantVideo, Mention, Creator } from '@/lib/types'
 import { AtlasMap } from './atlas-map'
 import { CreatorAvatar } from './creator-avatar'
@@ -349,15 +350,19 @@ export function AtlasView({ restaurants, creators }: Props) {
           className="absolute inset-0"
         />
 
-        {/* Detail panel — floats over map, hides under sheet on mobile (z-30 vs z-40) */}
-        {selected && (
-          <DetailPanel
-            restaurant={selected}
-            mentions={visibleMentions}
-            loading={loadingMentions}
-            onClose={() => setSelectedId(null)}
-          />
-        )}
+        {/* Detail panel — floats over map. AnimatePresence drives both the
+            mount (slide-in) and unmount (slide-out) so closing isn't a flash. */}
+        <AnimatePresence>
+          {selected && (
+            <DetailPanel
+              key={selected.id}
+              restaurant={selected}
+              mentions={visibleMentions}
+              loading={loadingMentions}
+              onClose={() => setSelectedId(null)}
+            />
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Mobile bottom sheet — qilingo-style drag between half (50dvh) and full (90dvh). */}
@@ -454,8 +459,22 @@ function DetailPanel({
     `${restaurant.name} ${restaurant.city}`
   )}`
 
+  // Animation direction: slide up from the bottom on mobile (matches the
+  // bottom-sheet idiom), slide in from the right on desktop. Detect once
+  // per mount so we don't fight resize during the animation.
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024
+  const initial = isMobile ? { y: '100%', opacity: 0 } : { x: 24, opacity: 0 }
+  const animate = isMobile ? { y: 0, opacity: 1 } : { x: 0, opacity: 1 }
+  const exit = isMobile ? { y: '100%', opacity: 0 } : { x: 24, opacity: 0 }
+
   return (
-    <div className="fixed lg:absolute z-50 inset-x-0 bottom-0 lg:left-auto lg:top-4 lg:right-4 lg:bottom-4 lg:inset-x-auto lg:w-[420px] bg-[var(--card)] rounded-t-2xl lg:rounded-3xl shadow-[var(--shadow-pop)] border border-[var(--border-strong)] flex flex-col max-h-[70dvh] lg:max-h-[calc(100vh-7rem)]">
+    <motion.div
+      initial={initial}
+      animate={animate}
+      exit={exit}
+      transition={{ type: 'spring', stiffness: 320, damping: 32, mass: 0.8 }}
+      className="fixed lg:absolute z-50 inset-x-0 bottom-0 lg:left-auto lg:top-4 lg:right-4 lg:bottom-4 lg:inset-x-auto lg:w-[420px] bg-[var(--card)] rounded-t-2xl lg:rounded-3xl shadow-[var(--shadow-pop)] border border-[var(--border-strong)] flex flex-col max-h-[70dvh] lg:max-h-[calc(100vh-7rem)]"
+    >
       <div className="p-5 border-b border-[var(--border)] flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="fm-display text-xl leading-tight">{restaurant.name}</h2>
@@ -581,6 +600,6 @@ function DetailPanel({
           Details →
         </a>
       </div>
-    </div>
+    </motion.div>
   )
 }
