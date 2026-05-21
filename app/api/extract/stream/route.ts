@@ -107,6 +107,18 @@ export async function POST(req: Request) {
       const abortController = new AbortController()
       req.signal.addEventListener('abort', () => abortController.abort())
 
+      // SSE comment-line heartbeat every 15s. During the 60-90s "Gemini is
+      // watching the video" phase the stream emits no real events; without a
+      // heartbeat, Safari and some proxies (Vercel edge included) tear down the
+      // idle connection, surfacing as a TypeError "Load failed" on the client.
+      const heartbeat = setInterval(() => {
+        try {
+          controller.enqueue(encoder.encode(`: keepalive\n\n`))
+        } catch {
+          // controller closed
+        }
+      }, 15_000)
+
       try {
         for await (const event of ingestUrlStream(url, {
           geminiKey: usingByok ? userGeminiKey! : undefined,
@@ -138,6 +150,7 @@ export async function POST(req: Request) {
             .eq('id', jobId)
         }
       } finally {
+        clearInterval(heartbeat)
         try {
           controller.close()
         } catch {

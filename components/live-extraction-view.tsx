@@ -357,11 +357,18 @@ function classifyError(raw: string | null): {
       retrySec,
     }
   }
-  if (/fetch failed|network|ECONN|ENOTFOUND|timeout/i.test(msg)) {
+  // Safari emits "Load failed" / "The network connection was lost" when fetch
+  // drops at the transport layer. Chrome/Firefox emit "Failed to fetch" / "The
+  // operation was aborted". All are network-layer failures, not server errors.
+  if (
+    /load failed|failed to fetch|fetch failed|network|ECONN|ENOTFOUND|timeout|connection (was )?lost|operation was aborted/i.test(
+      msg
+    )
+  ) {
     return {
       kind: 'network',
-      title: 'Network hiccup',
-      body: 'Could not reach the extraction service. Check your connection and try again.',
+      title: 'Connection dropped',
+      body: 'The connection to the extractor was interrupted before any data came back. Usually a Wi-Fi / cellular hiccup or a backgrounded tab. Retry should work.',
       retrySec: null,
     }
   }
