@@ -107,6 +107,9 @@ export default async function VideoPage({
   const videoProps: VideoPageVideo = {
     url: video.url,
     sourceKind: video.source_kind,
+    // Strip the `yt:` prefix to get the bare YouTube video ID. Non-YouTube
+    // sources currently aren't supported but we leave the field null-safe.
+    videoId: video.source_kind === 'youtube' ? video.id.replace(/^yt:/, '') : null,
     title: video.title,
     thumbnailUrl: video.thumbnail_url,
     parsedAgo: relativeTime(video.created_at),

@@ -16,13 +16,26 @@ export function YouTubeClip({
   startSec,
   title,
   className,
+  active: activeProp,
+  onActivate,
 }: {
   videoId: string
   startSec?: number
   title?: string
   className?: string
+  // Optional controlled state. If omitted, the component manages its own
+  // active flag (back-compat with old callers). Pass these from a parent
+  // that wants to force the iframe to mount externally (e.g. chapter-rail
+  // click on the watch page).
+  active?: boolean
+  onActivate?: () => void
 }) {
-  const [active, setActive] = useState(false)
+  const [internalActive, setInternalActive] = useState(false)
+  const active = activeProp ?? internalActive
+  const handleActivate = () => {
+    if (onActivate) onActivate()
+    else setInternalActive(true)
+  }
   const thumb = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`
   const start = startSec != null ? Math.max(0, Math.floor(startSec)) : 0
   const src = `https://www.youtube-nocookie.com/embed/${videoId}?start=${start}&autoplay=1&rel=0&modestbranding=1`
@@ -45,7 +58,7 @@ export function YouTubeClip({
       ) : (
         <button
           type="button"
-          onClick={() => setActive(true)}
+          onClick={handleActivate}
           className="absolute inset-0 group"
           aria-label={`Play ${title ?? 'video'}${startSec != null ? ` at ${formatTimestamp(startSec)}` : ''}`}
         >

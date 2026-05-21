@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { AtlasMap } from './atlas-map'
 import { CreatorAvatar } from './creator-avatar'
 import { SourceBadge } from './source-badge'
+import { YouTubeClip } from './youtube-clip'
 import { photoUrl } from '@/lib/photo'
 import { formatTimestamp, cn } from '@/lib/utils'
 import type { Restaurant, SourceKind, Platform } from '@/lib/types'
@@ -13,6 +14,8 @@ import { ArrowLeft, ExternalLink, Play, MapPin, X } from 'lucide-react'
 export type VideoPageVideo = {
   url: string
   sourceKind: SourceKind
+  /** YouTube video ID (null for non-YouTube sources) — used by the embedded player. */
+  videoId: string | null
   title: string | null
   thumbnailUrl: string | null
   parsedAgo: string
@@ -58,6 +61,15 @@ export function VideoPageView({
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const listRef = useRef<HTMLOListElement>(null)
+
+  // Embedded player state — lifted out of YouTubeClip so chapter clicks can
+  // both jump the time AND force the iframe to mount.
+  const [playerActive, setPlayerActive] = useState(false)
+  const [playerStartSec, setPlayerStartSec] = useState(0)
+  function jumpToChapter(sec: number) {
+    setPlayerStartSec(Math.max(0, Math.floor(sec)))
+    setPlayerActive(true)
+  }
 
   const restaurants: Restaurant[] = useMemo(
     () =>
@@ -108,16 +120,73 @@ export function VideoPageView({
           'bg-white'
         )}
       >
-        {/* Desktop-only header: back + compact video card */}
-        <header className="hidden lg:block border-b border-[var(--border)] p-4">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 text-xs text-[var(--muted)] hover:text-[var(--foreground)] mb-3"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Back
-          </Link>
-          <CompactVideoCard video={video} placeCount={mentions.length} />
+        {/* Desktop-only header: back + player + chapter rail */}
+        <header className="hidden lg:block border-b border-[var(--border)]">
+          <div className="p-4 pb-2">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-xs text-[var(--muted)] hover:text-[var(--foreground)]"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Back
+            </Link>
+          </div>
+          <div className="px-4">
+            {video.videoId ? (
+              <YouTubeClip
+                videoId={video.videoId}
+                startSec={playerStartSec}
+                title={video.title ?? undefined}
+                active={playerActive}
+                onActivate={() => setPlayerActive(true)}
+                className="rounded-xl"
+              />
+            ) : (
+              <CompactVideoCard video={video} placeCount={mentions.length} />
+            )}
+          </div>
+          {video.videoId && (
+            <div className="px-4 pt-3 pb-1">
+              <h1 className="fm-display text-base leading-tight font-semibold line-clamp-2">
+                {video.title ?? 'Untitled video'}
+              </h1>
+              <div className="mt-1.5 flex items-center gap-2 text-xs text-[var(--muted)]">
+                {video.creator && (
+                  <Link
+                    href={`/c/${video.creator.slug}`}
+                    className="inline-flex items-center gap-1.5 hover:text-[var(--foreground)] transition"
+                  >
+                    <CreatorAvatar
+                      creator={{
+                        slug: video.creator.slug,
+                        name: video.creator.name,
+                        platform: video.creator.platform,
+                        avatarUrl: video.creator.avatarUrl ?? undefined,
+                        videoCount: 0,
+                        restaurantCount: 0,
+                      }}
+                      size="sm"
+                      link={false}
+                    />
+                    <span className="font-semibold text-[var(--foreground-soft)]">
+                      {video.creator.name}
+                    </span>
+                  </Link>
+                )}
+                <span className="opacity-60">·</span>
+                <span>parsed {video.parsedAgo}</span>
+                <span className="ml-auto inline-flex items-center gap-1 text-[var(--foreground)] font-semibold">
+                  <MapPin className="w-3 h-3 text-[var(--accent)]" />
+                  {mentions.length}
+                </span>
+              </div>
+            </div>
+          )}
+          <ChapterRail
+            mentions={mentions}
+            currentSec={playerActive ? playerStartSec : null}
+            onJump={jumpToChapter}
+          />
         </header>
 
         {/* List */}
@@ -146,9 +215,9 @@ export function VideoPageView({
           'bg-white'
         )}
       >
-        {/* Mobile-only: back + hero + meta */}
+        {/* Mobile-only: back + player + meta + chapter rail */}
         <div className="lg:hidden">
-          <div className="px-4 pt-4">
+          <div className="px-4 pt-3 pb-2">
             <Link
               href="/"
               className="inline-flex items-center gap-1.5 text-sm text-[var(--muted)] hover:text-[var(--foreground)]"
@@ -157,62 +226,79 @@ export function VideoPageView({
               Back
             </Link>
           </div>
-          <a
-            href={video.url}
-            target="_blank"
-            rel="noreferrer"
-            className="group relative block aspect-video bg-black mt-3 overflow-hidden"
-          >
-            {video.thumbnailUrl && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={video.thumbnailUrl}
-                alt={video.title ?? ''}
-                className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:opacity-100 transition"
-              />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-white/95 text-[var(--accent)] shadow-xl">
-                <Play className="w-6 h-6 ml-0.5" fill="currentColor" />
+          {video.videoId ? (
+            <YouTubeClip
+              videoId={video.videoId}
+              startSec={playerStartSec}
+              title={video.title ?? undefined}
+              active={playerActive}
+              onActivate={() => setPlayerActive(true)}
+              className="!rounded-none"
+            />
+          ) : (
+            <a
+              href={video.url}
+              target="_blank"
+              rel="noreferrer"
+              className="group relative block aspect-video bg-black overflow-hidden"
+            >
+              {video.thumbnailUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={video.thumbnailUrl}
+                  alt={video.title ?? ''}
+                  className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:opacity-100 transition"
+                />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-white/95 text-[var(--accent)] shadow-xl">
+                  <Play className="w-6 h-6 ml-0.5" fill="currentColor" />
+                </span>
+              </div>
+            </a>
+          )}
+          <div className="px-4 pt-3 pb-2">
+            <h1 className="fm-display text-lg leading-tight font-semibold">
+              {video.title ?? 'Untitled video'}
+            </h1>
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-[var(--muted)]">
+              {video.creator && (
+                <Link
+                  href={`/c/${video.creator.slug}`}
+                  className="inline-flex items-center gap-1.5 hover:text-[var(--foreground)] transition"
+                >
+                  <CreatorAvatar
+                    creator={{
+                      slug: video.creator.slug,
+                      name: video.creator.name,
+                      platform: video.creator.platform,
+                      avatarUrl: video.creator.avatarUrl ?? undefined,
+                      videoCount: 0,
+                      restaurantCount: 0,
+                    }}
+                    size="sm"
+                    link={false}
+                  />
+                  <span className="font-semibold text-[var(--foreground-soft)]">
+                    {video.creator.name}
+                  </span>
+                </Link>
+              )}
+              <span className="opacity-60">·</span>
+              <span>parsed {video.parsedAgo}</span>
+              <span className="ml-auto inline-flex items-center gap-1 text-sm font-semibold text-[var(--foreground)]">
+                <MapPin className="w-4 h-4 text-[var(--accent)]" />
+                {mentions.length}
               </span>
             </div>
-            <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-              <SourceBadge kind={video.sourceKind} />
-              <h1 className="mt-2 fm-display text-xl leading-tight font-semibold drop-shadow">
-                {video.title ?? 'Untitled video'}
-              </h1>
-            </div>
-          </a>
-          <div className="px-4 py-3 flex flex-wrap items-center gap-3 border-b border-[var(--border)]">
-            {video.creator && (
-              <Link
-                href={`/c/${video.creator.slug}`}
-                className="inline-flex items-center gap-2 group"
-              >
-                <CreatorAvatar
-                  creator={{
-                    slug: video.creator.slug,
-                    name: video.creator.name,
-                    platform: video.creator.platform,
-                    avatarUrl: video.creator.avatarUrl ?? undefined,
-                    videoCount: 0,
-                    restaurantCount: 0,
-                  }}
-                  size="sm"
-                  link={false}
-                />
-                <span className="text-sm font-semibold group-hover:text-[var(--accent)] transition">
-                  {video.creator.name}
-                </span>
-              </Link>
-            )}
-            <span className="text-xs text-[var(--muted)]">parsed {video.parsedAgo}</span>
-            <span className="ml-auto inline-flex items-center gap-1 text-sm font-semibold">
-              <MapPin className="w-4 h-4 text-[var(--accent)]" />
-              {mentions.length} {mentions.length === 1 ? 'place' : 'places'}
-            </span>
           </div>
+          <ChapterRail
+            mentions={mentions}
+            currentSec={playerActive ? playerStartSec : null}
+            onJump={jumpToChapter}
+            className="border-y border-[var(--border)]"
+          />
         </div>
 
         {/* Map */}
@@ -234,6 +320,51 @@ export function VideoPageView({
           )}
         </div>
       </main>
+    </div>
+  )
+}
+
+function ChapterRail({
+  mentions,
+  currentSec,
+  onJump,
+  className,
+}: {
+  mentions: VideoPageMention[]
+  currentSec: number | null
+  onJump: (sec: number) => void
+  className?: string
+}) {
+  const chapters = mentions.filter(
+    (m): m is VideoPageMention & { timestampSec: number } => m.timestampSec != null
+  )
+  if (chapters.length === 0) return null
+
+  return (
+    <div className={cn('overflow-x-auto fm-no-scrollbar', className)}>
+      <div className="flex gap-1.5 px-4 py-2.5">
+        {chapters.map((m) => {
+          const active = currentSec === m.timestampSec
+          return (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => onJump(m.timestampSec)}
+              className={cn(
+                'shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium ring-1 ring-inset transition',
+                active
+                  ? 'bg-[var(--foreground)] text-white ring-[var(--foreground)]'
+                  : 'bg-white text-[var(--foreground-soft)] ring-[var(--border)] hover:ring-[var(--foreground)]/40 hover:text-[var(--foreground)]'
+              )}
+            >
+              <span className={cn('font-mono text-[10px]', active ? 'opacity-80' : 'text-[var(--accent)]')}>
+                {formatTimestamp(m.timestampSec)}
+              </span>
+              <span className="max-w-[140px] truncate">{m.restaurant.name}</span>
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }
