@@ -119,6 +119,12 @@ export async function POST(req: Request) {
         }
       }, 15_000)
 
+      // Track final outcome so the job row doesn't incorrectly land on 'done'
+      // when the client disconnected mid-stream (the for-await loop ends
+      // naturally on abort — there's no exception to catch).
+      let finalStatus: 'done' | 'failed' | 'aborted' = 'aborted'
+      let failureMsg: string | null = null
+
       try {
         for await (const event of ingestUrlStream(url, {
           geminiKey: usingByok ? userGeminiKey! : undefined,
@@ -126,15 +132,15 @@ export async function POST(req: Request) {
           force,
         })) {
           send(event)
-          if (event.type === 'complete' || event.type === 'error') break
-        }
-
-        // Update job row to final state
-        if (jobId) {
-          await sb
-            .from('jobs')
-            .update({ status: 'done' })
-            .eq('id', jobId)
+          if (event.type === 'complete') {
+            finalStatus = 'done'
+            break
+          }
+          if (event.type === 'error') {
+            finalStatus = 'failed'
+            failureMsg = event.data.message
+            break
+          }
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)
@@ -143,19 +149,28 @@ export async function POST(req: Request) {
           `[stream-route:uncaught] url=${url} jobId=${jobId} error=${msg}${stack ? '\n' + stack : ''}`
         )
         send({ type: 'error', data: { message: msg } })
+        finalStatus = 'failed'
+        failureMsg = msg
+      } finally {
         if (jobId) {
+          if (finalStatus === 'aborted') {
+            console.warn(`[stream-route:aborted] url=${url} jobId=${jobId} (client disconnected before complete/error)`)
+          }
           await sb
             .from('jobs')
-            .update({ status: 'failed', error: msg.slice(0, 1000) })
+            .update({
+              status: finalStatus,
+              error: failureMsg ? failureMsg.slice(0, 1000) : null,
+            })
             .eq('id', jobId)
         }
-      } finally {
-        clearInterval(heartbeat)
-        try {
-          controller.close()
-        } catch {
-          // already closed
-        }
+      }
+      // Stream cleanup — runs regardless of finalStatus.
+      clearInterval(heartbeat)
+      try {
+        controller.close()
+      } catch {
+        // already closed
       }
     },
   })
