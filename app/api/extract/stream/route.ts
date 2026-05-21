@@ -126,6 +126,10 @@ export async function POST(req: Request) {
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)
+        const stack = err instanceof Error ? err.stack : undefined
+        console.error(
+          `[stream-route:uncaught] url=${url} jobId=${jobId} error=${msg}${stack ? '\n' + stack : ''}`
+        )
         send({ type: 'error', data: { message: msg } })
         if (jobId) {
           await sb

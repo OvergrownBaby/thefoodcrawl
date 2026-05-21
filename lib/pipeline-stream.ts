@@ -28,16 +28,17 @@ export async function* ingestUrlStream(
   opts: { geminiKey?: string; signal?: AbortSignal; force?: boolean } = {}
 ): AsyncGenerator<ExtractEvent> {
   const sb = supabaseAdmin()
+  // Start marker so Vercel logs show which URL each extract attempt corresponds to.
+  console.log(`[ingest:start] url=${url} byok=${!!opts.geminiKey} force=${!!opts.force}`)
 
   // 1. Fetch metadata. Synchronous, fast.
   let content: FetchedContent
   try {
     content = await fetchUrl(url)
   } catch (e) {
-    yield {
-      type: 'error',
-      data: { message: e instanceof Error ? e.message : String(e) },
-    }
+    const msg = e instanceof Error ? e.message : String(e)
+    console.error(`[ingest:fetch-failed] url=${url} error=${msg}`)
+    yield { type: 'error', data: { message: msg } }
     return
   }
 
@@ -161,15 +162,15 @@ export async function* ingestUrlStream(
   try {
     extracted = await extractRestaurants(content, { geminiKey: opts.geminiKey })
   } catch (e) {
-    yield {
-      type: 'error',
-      data: { message: e instanceof Error ? e.message : String(e) },
-    }
+    const msg = e instanceof Error ? e.message : String(e)
+    console.error(`[ingest:extract-failed] url=${url} videoId=${videoId} error=${msg}`)
+    yield { type: 'error', data: { message: msg } }
     return
   }
 
   if (opts.signal?.aborted) return
 
+  console.log(`[ingest:extract-ok] url=${url} videoId=${videoId} count=${extracted.length}`)
   yield { type: 'extraction.found', data: { count: extracted.length } }
 
   if (extracted.length === 0) {
@@ -209,6 +210,9 @@ export async function* ingestUrlStream(
     const geo = await geocodeRestaurant({ name: r.name, city: r.city, country: r.country })
     if (!geo) {
       skippedNoGeocode++
+      console.warn(
+        `[ingest:no-geocode] url=${url} name="${r.name}" city="${r.city}" country=${r.country}`
+      )
       yield {
         type: 'restaurant.skipped',
         data: { clientId, name: r.name, reason: 'No matching place on the map' },
@@ -254,6 +258,9 @@ export async function* ingestUrlStream(
         .single()
 
       if (rErr || !row) {
+        console.error(
+          `[ingest:restaurant-upsert-failed] url=${url} name="${r.name}" error=${rErr?.message ?? 'no row returned'}`
+        )
         yield {
           type: 'restaurant.skipped',
           data: { clientId, name: r.name, reason: rErr?.message ?? 'db error' },
@@ -280,6 +287,11 @@ export async function* ingestUrlStream(
       )
       .select('id')
       .single()
+    if (mErr) {
+      console.error(
+        `[ingest:mention-upsert-failed] url=${url} name="${r.name}" error=${mErr.message}`
+      )
+    }
     if (!mErr && mentionRow) {
       mentionsAdded++
       // Write per-dish rows. Each (mention_id, name) is unique — upserting
@@ -315,6 +327,9 @@ export async function* ingestUrlStream(
     }
   }
 
+  console.log(
+    `[ingest:complete] url=${url} videoId=${videoId} restaurantsAdded=${restaurantsAdded} mentionsAdded=${mentionsAdded} skippedNoGeocode=${skippedNoGeocode}`
+  )
   yield {
     type: 'complete',
     data: { videoId, restaurantsAdded, mentionsAdded, skippedNoGeocode },
