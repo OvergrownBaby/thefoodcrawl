@@ -69,6 +69,21 @@ export function AtlasView({ restaurants, creators }: Props) {
   // Reset mentions when selection clears (derive-not-effect would mix state and async fetch awkwardly).
   const visibleMentions = effectiveSelectedId ? selectedMentions : []
 
+  // Mobile vs desktop layout. Computed once on mount + on resize so the
+  // map's pan-offset (which pushes the focal pin above the bottom sheet)
+  // updates if the user rotates the device or resizes the window.
+  const [isMobile, setIsMobile] = useState(false)
+  const [viewportH, setViewportH] = useState(800)
+  useEffect(() => {
+    function update() {
+      setIsMobile(window.innerWidth < 1024)
+      setViewportH(window.innerHeight)
+    }
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
+
   // Mobile bottom-sheet state — qilingo-style two-snap (half/full) drag.
   const [sheetMode, setSheetMode] = useState<'half' | 'full'>('half')
   const [sheetDragY, setSheetDragY] = useState(0)
@@ -325,6 +340,9 @@ export function AtlasView({ restaurants, creators }: Props) {
           onSelect={setSelectedId}
           focusedId={focusedId}
           globe
+          // Mobile: shift focal pin UP by ~25% of viewport (half of the sheet's
+          // 50dvh) so it lands in the visible map area above the sheet.
+          panOffset={isMobile ? [0, -Math.round(viewportH * 0.25)] : undefined}
           className="absolute inset-0"
         />
 

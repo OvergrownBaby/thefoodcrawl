@@ -24,6 +24,10 @@ type Props = {
   // zooming or marking the pin as selected. Used by the mobile bottom-sheet
   // to make the map track whichever restaurant is currently in view.
   focusedId?: string | null
+  // Pixel offset applied to all programmatic pan/fly operations. Use
+  // [0, -N] on mobile to push the focal point UP so it's not hidden behind
+  // the bottom sheet (negative Y = focal pin appears higher on screen).
+  panOffset?: [number, number]
 }
 
 const TILE_STYLE: maplibregl.StyleSpecification = {
@@ -67,6 +71,7 @@ export function AtlasMap({
   numbered = false,
   globe = false,
   focusedId,
+  panOffset,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MLMap | null>(null)
@@ -232,22 +237,34 @@ export function AtlasMap({
       if (id === selectedId) {
         el.classList.add('fm-marker-selected')
         const r = restaurants.find((x) => x.id === id)
-        if (r) mapRef.current?.flyTo({ center: [r.lng, r.lat], zoom: 15, duration: 600 })
+        if (r)
+          mapRef.current?.flyTo({
+            center: [r.lng, r.lat],
+            zoom: 15,
+            duration: 600,
+            offset: panOffset ?? [0, 0],
+          })
       } else {
         el.classList.remove('fm-marker-selected')
       }
     }
-  }, [selectedId, restaurants])
+  }, [selectedId, restaurants, panOffset])
 
   // Scroll-driven focus: gentle pan to the pin without zoom-in or selection
   // styling. Used when the mobile sheet scrolls a new restaurant into view.
+  // panOffset shifts the focal point up by N pixels so it's not hidden behind
+  // the bottom sheet on mobile.
   useEffect(() => {
     if (!focusedId || !mapRef.current) return
     if (focusedId === selectedId) return // selectedId effect already flew there
     const r = restaurants.find((x) => x.id === focusedId)
     if (!r) return
-    mapRef.current.easeTo({ center: [r.lng, r.lat], duration: 450 })
-  }, [focusedId, restaurants, selectedId])
+    mapRef.current.easeTo({
+      center: [r.lng, r.lat],
+      duration: 450,
+      offset: panOffset ?? [0, 0],
+    })
+  }, [focusedId, restaurants, selectedId, panOffset])
 
   return (
     <div className={className}>
