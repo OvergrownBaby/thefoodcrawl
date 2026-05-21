@@ -193,6 +193,22 @@ body {
   box-shadow: none;
 }
 
+/* Back-of-globe pins: MapLibre adds `maplibregl-marker-covered` to markers
+ * occluded by the back of the sphere. Default lowers opacity to ~5%, which
+ * makes them barely visible but still triggers hover and click. Dim further
+ * and disable interactions so they don't compete with front-facing pins. */
+.fm-marker.maplibregl-marker-covered {
+  opacity: 0.12;
+  pointer-events: none;
+}
+.fm-marker.maplibregl-marker-covered .fm-marker-pin {
+  transform: scale(0.7);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
+}
+.fm-marker.maplibregl-marker-covered .fm-marker-card {
+  display: none;
+}
+
 /* Floating hover card — photo + name + city. Only shown on hover/selected. */
 .fm-marker-card {
   position: absolute;
