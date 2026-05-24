@@ -124,7 +124,7 @@ export function SubmitForm({
 
         <div className="mt-3 flex items-center justify-between gap-3 text-xs text-[var(--muted)]">
           <span className="truncate">
-            YouTube links only for now. Long-form videos can take 1–3 minutes.
+            YouTube only · 1–3 min per video · 5 free/hr on the shared key
           </span>
           <button
             type="button"

@@ -342,7 +342,7 @@ function classifyError(raw: string | null): {
 } {
   const msg = (raw ?? '').toString()
   if (
-    /RESOURCE_EXHAUSTED|free_tier_requests|exceeded your current quota|quota\b|\b429\b/i.test(
+    /RESOURCE_EXHAUSTED|free_tier_requests|exceeded your current quota|quota\b|\b429\b|Rate limit:|is busy right now|Daily limit hit|too many submissions|reopen tomorrow/i.test(
       msg
     )
   ) {
@@ -350,10 +350,10 @@ function classifyError(raw: string | null): {
     const retrySec = m ? Math.ceil(parseFloat(m[1])) : null
     return {
       kind: 'quota',
-      title: 'Free Gemini quota hit',
+      title: 'Out of free extractions',
       body: retrySec
         ? `The shared free key has run out for the moment. Try again in ~${retrySec}s, or add your own Gemini key for unlimited extractions.`
-        : 'The shared free Gemini quota has run out. Add your own Gemini API key for unlimited extractions — it stays in your browser.',
+        : 'The shared free key is exhausted right now. Add your own Gemini API key for unlimited extractions — it stays in your browser.',
       retrySec,
     }
   }
