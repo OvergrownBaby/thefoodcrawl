@@ -6,8 +6,8 @@ import type { Restaurant, RestaurantVideo, Mention, Creator } from '@/lib/types'
 import { AtlasMap } from './atlas-map'
 import { CreatorAvatar } from './creator-avatar'
 import { SourceBadge } from './source-badge'
-import { formatTimestamp, priceDots, cn } from '@/lib/utils'
-import { X, MapPin, ExternalLink, Loader2 } from 'lucide-react'
+import { formatTimestamp, priceDots, cn, placeTitle } from '@/lib/utils'
+import { X, MapPin, ExternalLink, Loader2, ChevronDown, ChevronUp } from 'lucide-react'
 
 type Props = {
   restaurants: Restaurant[]
@@ -17,6 +17,7 @@ type Props = {
 export function AtlasView({ restaurants, creators }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [activeCreator, setActiveCreator] = useState<string | null>(null)
+  const [creatorsExpanded, setCreatorsExpanded] = useState(false)
   const [selectedMentions, setSelectedMentions] = useState<Mention[]>([])
   const [loadingMentions, setLoadingMentions] = useState(false)
   // Hover preview lives in a portal-style fixed position so it escapes the
@@ -209,10 +210,57 @@ export function AtlasView({ restaurants, creators }: Props) {
     </div>
   )
 
+  // Collapsible creator filter. With many creators the full wrapped list eats
+  // the sidebar height, squeezing the restaurant list — so show a handful by
+  // default and let the user expand into a height-capped scroll area. The
+  // active creator is always kept visible even while collapsed.
+  const COLLAPSED_CREATORS = 6
+  const creatorList = creators.filter((c) => c.restaurantCount > 0)
+  let shownCreators = creatorsExpanded
+    ? creatorList
+    : creatorList.slice(0, COLLAPSED_CREATORS)
+  if (
+    !creatorsExpanded &&
+    activeCreator &&
+    !shownCreators.some((c) => c.slug === activeCreator)
+  ) {
+    const ac = creatorList.find((c) => c.slug === activeCreator)
+    if (ac) {
+      shownCreators = [
+        ac,
+        ...creatorList.filter((c) => c.slug !== ac.slug).slice(0, COLLAPSED_CREATORS - 1),
+      ]
+    }
+  }
+  const hiddenCreatorCount = creatorList.length - shownCreators.length
+
+  const creatorChip = (c: Creator) => (
+    <button
+      key={c.slug}
+      onClick={() => setActiveCreator(c.slug)}
+      className={cn(
+        'inline-flex items-center gap-1.5 pl-1 pr-3 py-1 rounded-full text-xs font-medium ring-1 ring-inset transition',
+        activeCreator === c.slug
+          ? 'bg-[var(--foreground)] text-white ring-[var(--foreground)]'
+          : 'bg-white text-[var(--foreground)] ring-[var(--border)] hover:ring-[var(--foreground)]/30'
+      )}
+    >
+      <CreatorAvatar creator={c} size="sm" link={false} />
+      {c.name}
+    </button>
+  )
+
   const filterRail = (
-    <div className="p-5 space-y-3 border-b border-[var(--border)]">
-      <div className="flex items-center justify-between">
-        <span className="fm-label">Creator</span>
+    <div className="px-5 py-4 border-b border-[var(--border)]">
+      <div className="flex items-center justify-between mb-2.5">
+        <span className="fm-label">
+          Creator
+          {creatorList.length > 0 && (
+            <span className="ml-1.5 text-[var(--muted)] font-normal normal-case tracking-normal">
+              {creatorList.length}
+            </span>
+          )}
+        </span>
         {activeCreator && (
           <button
             onClick={() => setActiveCreator(null)}
@@ -222,7 +270,12 @@ export function AtlasView({ restaurants, creators }: Props) {
           </button>
         )}
       </div>
-      <div className="flex flex-wrap gap-1.5">
+      <div
+        className={cn(
+          'flex flex-wrap gap-1.5',
+          creatorsExpanded && 'max-h-[34vh] overflow-y-auto pr-1'
+        )}
+      >
         <button
           onClick={() => setActiveCreator(null)}
           className={cn(
@@ -234,23 +287,25 @@ export function AtlasView({ restaurants, creators }: Props) {
         >
           Everyone
         </button>
-        {creators
-          .filter((c) => c.restaurantCount > 0)
-          .map((c) => (
-            <button
-              key={c.slug}
-              onClick={() => setActiveCreator(c.slug)}
-              className={cn(
-                'inline-flex items-center gap-1.5 pl-1 pr-3 py-1 rounded-full text-xs font-medium ring-1 ring-inset transition',
-                activeCreator === c.slug
-                  ? 'bg-[var(--foreground)] text-white ring-[var(--foreground)]'
-                  : 'bg-white text-[var(--foreground)] ring-[var(--border)] hover:ring-[var(--foreground)]/30'
-              )}
-            >
-              <CreatorAvatar creator={c} size="sm" link={false} />
-              {c.name}
-            </button>
-          ))}
+        {shownCreators.map(creatorChip)}
+        {!creatorsExpanded && hiddenCreatorCount > 0 && (
+          <button
+            onClick={() => setCreatorsExpanded(true)}
+            className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ring-1 ring-inset ring-[var(--border)] text-[var(--muted)] hover:text-[var(--foreground)] hover:ring-[var(--foreground)]/30 transition"
+          >
+            +{hiddenCreatorCount} more
+            <ChevronDown className="w-3 h-3" />
+          </button>
+        )}
+        {creatorsExpanded && creatorList.length > COLLAPSED_CREATORS && (
+          <button
+            onClick={() => setCreatorsExpanded(false)}
+            className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ring-1 ring-inset ring-[var(--border)] text-[var(--muted)] hover:text-[var(--foreground)] hover:ring-[var(--foreground)]/30 transition"
+          >
+            Show less
+            <ChevronUp className="w-3 h-3" />
+          </button>
+        )}
       </div>
     </div>
   )
@@ -284,9 +339,13 @@ export function AtlasView({ restaurants, creators }: Props) {
           >
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <div className="font-semibold text-sm truncate">{r.name}</div>
-                {r.nameLocal && (
-                  <div className="text-xs text-[var(--muted)] truncate">{r.nameLocal}</div>
+                <div className="font-semibold text-sm truncate">
+                  {placeTitle(r.name, r.nameLocal).primary}
+                </div>
+                {placeTitle(r.name, r.nameLocal).secondary && (
+                  <div className="text-xs text-[var(--muted)] truncate">
+                    {placeTitle(r.name, r.nameLocal).secondary}
+                  </div>
                 )}
                 <div className="mt-0.5 text-[11px] text-[var(--muted)] truncate">
                   {r.cuisine}
@@ -477,9 +536,13 @@ function DetailPanel({
     >
       <div className="p-5 border-b border-[var(--border)] flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="fm-display text-xl leading-tight">{restaurant.name}</h2>
-          {restaurant.nameLocal && (
-            <p className="text-sm text-[var(--muted)] font-medium">{restaurant.nameLocal}</p>
+          <h2 className="fm-display text-xl leading-tight">
+            {placeTitle(restaurant.name, restaurant.nameLocal).primary}
+          </h2>
+          {placeTitle(restaurant.name, restaurant.nameLocal).secondary && (
+            <p className="text-sm text-[var(--muted)] font-medium">
+              {placeTitle(restaurant.name, restaurant.nameLocal).secondary}
+            </p>
           )}
           <p className="mt-1.5 text-xs text-[var(--muted)]">
             {restaurant.cuisine}
