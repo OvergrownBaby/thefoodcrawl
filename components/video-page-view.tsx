@@ -8,7 +8,7 @@ import { SourceBadge } from './source-badge'
 import { YouTubeClip } from './youtube-clip'
 import { ResultActions } from './result-actions'
 import { photoUrl } from '@/lib/photo'
-import { formatTimestamp, cn } from '@/lib/utils'
+import { formatTimestamp, cn, placeTitle } from '@/lib/utils'
 import type { ExportItem } from '@/lib/export-extraction'
 import type { Restaurant, SourceKind, Platform } from '@/lib/types'
 import { ArrowLeft, ExternalLink, Play, MapPin, X } from 'lucide-react'
@@ -396,7 +396,9 @@ function ChapterRail({
               <span className={cn('font-mono text-[10px]', active ? 'opacity-80' : 'text-[var(--accent)]')}>
                 {formatTimestamp(m.timestampSec)}
               </span>
-              <span className="max-w-[140px] truncate">{m.restaurant.name}</span>
+              <span className="max-w-[140px] truncate">
+                {placeTitle(m.restaurant.name, m.restaurant.nameLocal).primary}
+              </span>
             </button>
           )
         })}
@@ -417,6 +419,7 @@ function PlaceDetailPanel({
   onClose: () => void
 }) {
   const r = m.restaurant
+  const rTitle = placeTitle(r.name, r.nameLocal)
   const photo = photoUrl(r.photoName, 400)
   const ts = m.timestampSec
   const tsLink = ts != null ? `${videoUrl}&t=${Math.floor(ts)}s` : videoUrl
@@ -454,9 +457,9 @@ function PlaceDetailPanel({
             </span>
           </span>
           <div className="min-w-0">
-            <h2 className="fm-display text-lg leading-tight font-semibold truncate">{r.name}</h2>
-            {r.nameLocal && (
-              <div className="text-xs text-[var(--muted)] truncate">{r.nameLocal}</div>
+            <h2 className="fm-display text-lg leading-tight font-semibold truncate">{rTitle.primary}</h2>
+            {rTitle.secondary && (
+              <div className="text-xs text-[var(--muted)] truncate">{rTitle.secondary}</div>
             )}
             <div className="text-[11px] text-[var(--muted)] mt-0.5 truncate">
               {r.cuisine ? `${r.cuisine} · ` : ''}
@@ -633,6 +636,7 @@ function MentionRow({
   videoUrl: string
 }) {
   const r = m.restaurant
+  const rTitle = placeTitle(r.name, r.nameLocal)
   const photo = photoUrl(r.photoName, 200)
   const ts = m.timestampSec
   const tsLink = ts != null ? `${videoUrl}&t=${Math.floor(ts)}s` : videoUrl
@@ -676,7 +680,7 @@ function MentionRow({
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline justify-between gap-2">
             <span className="font-semibold text-sm leading-tight truncate">
-              {r.name}
+              {rTitle.primary}
             </span>
             {ts != null && (
               <a
@@ -691,9 +695,9 @@ function MentionRow({
               </a>
             )}
           </div>
-          {r.nameLocal && (
+          {rTitle.secondary && (
             <div className="text-[11px] text-[var(--muted)] truncate">
-              {r.nameLocal}
+              {rTitle.secondary}
             </div>
           )}
           <div className="text-[11px] text-[var(--muted)] truncate">

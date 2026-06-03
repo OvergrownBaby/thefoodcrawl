@@ -8,7 +8,7 @@ import { AtlasMap } from './atlas-map'
 import { SourceBadge } from './source-badge'
 import { ResultActions } from './result-actions'
 import { photoUrl } from '@/lib/photo'
-import { formatTimestamp, cn, videoSharePath } from '@/lib/utils'
+import { formatTimestamp, cn, videoSharePath, placeTitle } from '@/lib/utils'
 import type { Restaurant, SourceKind } from '@/lib/types'
 import { Loader2, X, ArrowRight, ExternalLink, MapPin, Key, AlertTriangle, Wifi } from 'lucide-react'
 
@@ -255,6 +255,7 @@ function ArrivalCard({
   videoUrl: string
 }) {
   const photo = photoUrl(arrival.photoName, 200)
+  const title = placeTitle(arrival.name, arrival.nameLocal)
   const ts = arrival.timestampSec
   const videoUrlWithTime = ts != null ? `${videoUrl}&t=${Math.floor(ts)}s` : videoUrl
   return (
@@ -295,13 +296,13 @@ function ArrivalCard({
               href={`/p/${arrival.id}`}
               className="font-semibold hover:text-[var(--accent)] transition"
             >
-              {arrival.name}
+              {title.primary}
             </Link>
           ) : (
-            <span className="font-semibold">{arrival.name}</span>
+            <span className="font-semibold">{title.primary}</span>
           )}
-          {arrival.nameLocal && (
-            <span className="text-xs text-[var(--muted)]">{arrival.nameLocal}</span>
+          {title.secondary && (
+            <span className="text-xs text-[var(--muted)]">{title.secondary}</span>
           )}
         </div>
         <div className="text-xs text-[var(--muted)] mt-0.5">

@@ -5,7 +5,7 @@
  * surfaces offer the same "copy the list" affordances.
  */
 
-import { formatTimestamp } from './utils'
+import { formatTimestamp, placeTitle } from './utils'
 
 export type ExportItem = {
   name: string
@@ -36,17 +36,18 @@ function withMark(body: string, url?: string | null): string {
   return `${body}\n\n${exportMark(url)}`
 }
 
-/** One restaurant name per line. The simplest copy-paste. */
+/** One restaurant name per line. The simplest copy-paste. Native name first. */
 export function toNamesText(items: ExportItem[], opts: { url?: string | null } = {}): string {
-  return withMark(items.map((r) => r.name).join('\n'), opts.url)
+  return withMark(items.map((r) => placeTitle(r.name, r.nameLocal).primary).join('\n'), opts.url)
 }
 
 /** "Name — m:ss" per line. Name only when there's no timestamp. */
 export function toNamesAndTimesText(items: ExportItem[], opts: { url?: string | null } = {}): string {
   const body = items
     .map((r) => {
+      const name = placeTitle(r.name, r.nameLocal).primary
       const ts = r.timestampSec != null ? formatTimestamp(r.timestampSec) : null
-      return ts ? `${r.name} — ${ts}` : r.name
+      return ts ? `${name} — ${ts}` : name
     })
     .join('\n')
   return withMark(body, opts.url)
@@ -58,9 +59,10 @@ export function toDetailsText(items: ExportItem[], opts: { title?: string; url?:
   if (opts.title) lines.push(opts.title, '')
 
   items.forEach((r, i) => {
-    const local = r.nameLocal ? ` (${r.nameLocal})` : ''
+    const { primary, secondary } = placeTitle(r.name, r.nameLocal)
+    const alt = secondary ? ` (${secondary})` : ''
     const meta = [r.cuisine, r.city].filter(Boolean).join(' · ')
-    lines.push(`${i + 1}. ${r.name}${local}${meta ? ` — ${meta}` : ''}`)
+    lines.push(`${i + 1}. ${primary}${alt}${meta ? ` — ${meta}` : ''}`)
     const ts = r.timestampSec != null ? formatTimestamp(r.timestampSec) : null
     if (r.quote) lines.push(`   ${ts ? `[${ts}] ` : ''}"${r.quote.trim()}"`)
     else if (ts) lines.push(`   [${ts}]`)

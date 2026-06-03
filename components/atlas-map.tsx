@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import maplibregl, { Map as MLMap, Marker } from 'maplibre-gl'
 import type { Restaurant } from '@/lib/types'
 import { photoUrl } from '@/lib/photo'
+import { placeTitle } from '@/lib/utils'
 
 type Props = {
   restaurants: Restaurant[]
@@ -162,7 +163,8 @@ export function AtlasMap({
       if (el instanceof HTMLButtonElement) el.type = 'button'
       if (el instanceof HTMLAnchorElement) el.href = `/p/${r.id}`
       el.className = 'fm-marker'
-      el.title = r.name
+      const markerTitle = placeTitle(r.name, r.nameLocal).primary
+      el.title = markerTitle
 
       const photoSrc = photoUrl(r.photoName, 400)
       const photoBlock = photoSrc
@@ -174,7 +176,7 @@ export function AtlasMap({
         <span class="fm-marker-card">
           ${photoBlock}
           <span class="fm-marker-card-meta">
-            <span class="fm-marker-card-name">${escapeHtml(r.name)}</span>
+            <span class="fm-marker-card-name">${escapeHtml(markerTitle)}</span>
             <span class="fm-marker-card-city">${escapeHtml(r.city)}</span>
           </span>
         </span>

@@ -6,7 +6,7 @@ import { SourceBadge } from '@/components/source-badge'
 import { CreatorAvatar } from '@/components/creator-avatar'
 import { YouTubeClip } from '@/components/youtube-clip'
 import { youtubeIdFromUrl } from '@/lib/fetchers/youtube'
-import { formatTimestamp, priceDots } from '@/lib/utils'
+import { formatTimestamp, priceDots, placeTitle } from '@/lib/utils'
 import { ExternalLink, MapPin, ArrowLeft, Utensils } from 'lucide-react'
 import { photoUrl } from '@/lib/photo'
 
@@ -67,9 +67,13 @@ export default async function PlacePage({
               <div className="p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h1 className="text-3xl font-bold">{restaurant.name}</h1>
-                  {restaurant.nameLocal && (
-                    <p className="text-lg text-[var(--muted)]">{restaurant.nameLocal}</p>
+                  <h1 className="text-3xl font-bold">
+                    {placeTitle(restaurant.name, restaurant.nameLocal).primary}
+                  </h1>
+                  {placeTitle(restaurant.name, restaurant.nameLocal).secondary && (
+                    <p className="text-lg text-[var(--muted)]">
+                      {placeTitle(restaurant.name, restaurant.nameLocal).secondary}
+                    </p>
                   )}
                 </div>
                 {restaurant.priceLevel && (

@@ -30,8 +30,8 @@ const SYSTEM_PROMPT = `You extract restaurant recommendations from food content.
 You MUST return a JSON object with one key "restaurants" containing an array.
 For each restaurant you find:
 
-- "name": the English/romanized name as said in the source.
-- "nameLocal": local-script name (Chinese, Thai, etc.) if shown or said, else omit.
+- "name": the English/romanized name (used internally for maps/search). If the place has no romanized form, romanize the native name.
+- "nameLocal": the place's name in its ORIGINAL native script (Chinese, Japanese, Korean, Thai, etc.), EXACTLY as shown on screen or said. This is how locals know the place and how it's displayed. ALWAYS include it for places in non-English-speaking regions whenever the native name appears on screen, in captions, or is clearly audible — do not drop it. Omit only if the place genuinely has no native-script name (e.g. a Western-named cafe).
 - "city": city name in English (e.g. "Hong Kong", "Bangkok").
 - "country": ISO-2 country code (e.g. "HK", "TH", "US").
 - "cuisine": short freeform string (e.g. "Cantonese, Dim Sum").

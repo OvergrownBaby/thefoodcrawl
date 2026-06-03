@@ -59,7 +59,9 @@ export function SubmitForm() {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             disabled={busy}
-            className="flex-1 min-w-0 bg-transparent outline-none text-sm py-1.5"
+            // text-base (16px) on mobile prevents iOS Safari's focus auto-zoom;
+            // drop to 14px on sm+ where zoom doesn't apply.
+            className="flex-1 min-w-0 bg-transparent outline-none text-base sm:text-sm py-1.5"
           />
           <button
             type="submit"
