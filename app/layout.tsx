@@ -60,6 +60,12 @@ export const metadata: Metadata = {
     creator: "@OvergrownBaby",
   },
   robots: { index: true, follow: true },
+  other: {
+    // Agoda affiliate domain verification (automated/meta-tag method, VerificationType 2).
+    // Content value is arbitrary — Agoda checks the tag's presence by name. Non-empty so
+    // Next.js doesn't strip it (content-less metas get dropped).
+    "agd-partner-manual-verification": "thefoodcrawl",
+  },
 };
 
 export default function RootLayout({
