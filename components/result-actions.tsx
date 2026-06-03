@@ -1,14 +1,16 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Check, Copy, Download, Link2, List, Share2 } from 'lucide-react'
+import { Check, Clock, Copy, Download, Link2, List, Share } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   copyToClipboard,
   downloadTextFile,
   exportSlug,
+  shareLinkText,
   toCsv,
   toDetailsText,
+  toNamesAndTimesText,
   toNamesText,
   type ExportItem,
 } from '@/lib/export-extraction'
@@ -63,13 +65,13 @@ function ShareButton({
     const nav = typeof navigator !== 'undefined' ? navigator : undefined
     if (nav && 'share' in nav && typeof nav.share === 'function') {
       try {
-        await nav.share({ title: title ?? 'Foodcrawl', url })
+        await nav.share({ title: title ?? 'Foodcrawl', text: 'Extracted with Foodcrawl', url })
         return
       } catch {
         // user cancelled or unsupported payload — fall back to copy
       }
     }
-    const ok = await copyToClipboard(url)
+    const ok = await copyToClipboard(shareLinkText(url))
     if (ok) {
       setCopied(true)
       timer.current = setTimeout(() => setCopied(false), 1800)
@@ -88,13 +90,13 @@ function ShareButton({
       )}
       aria-label="Share results"
     >
-      {copied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+      {copied ? <Check className="w-4 h-4" /> : <Share className="w-4 h-4" />}
       {!compact && <span>{copied ? 'Link copied' : 'Share'}</span>}
     </button>
   )
 }
 
-type CopyAction = 'names' | 'details' | 'csv'
+type CopyAction = 'names' | 'names-times' | 'details' | 'csv'
 
 function CopyMenu({
   items,
@@ -139,15 +141,17 @@ function CopyMenu({
 
   async function run(action: CopyAction) {
     if (action === 'csv') {
-      downloadTextFile(`${exportSlug(shareTitle)}.csv`, toCsv(items), 'text/csv')
+      downloadTextFile(`${exportSlug(shareTitle)}.csv`, toCsv(items, { url: shareUrl }), 'text/csv')
       flash('csv')
       setOpen(false)
       return
     }
     const text =
       action === 'names'
-        ? toNamesText(items)
-        : toDetailsText(items, { title: shareTitle ?? undefined, url: shareUrl ?? undefined })
+        ? toNamesText(items, { url: shareUrl })
+        : action === 'names-times'
+          ? toNamesAndTimesText(items, { url: shareUrl })
+          : toDetailsText(items, { title: shareTitle ?? undefined, url: shareUrl })
     const ok = await copyToClipboard(text)
     if (ok) flash(action)
     setOpen(false)
@@ -179,6 +183,7 @@ function CopyMenu({
           className="absolute right-0 z-30 mt-1.5 w-56 rounded-xl border border-[var(--border)] bg-white p-1 shadow-[0_16px_40px_-16px_rgba(0,0,0,0.3)]"
         >
           <MenuItem icon={<List className="w-3.5 h-3.5" />} title="Copy names" hint="One per line" onClick={() => run('names')} />
+          <MenuItem icon={<Clock className="w-3.5 h-3.5" />} title="Copy names + times" hint="Name — timestamp" onClick={() => run('names-times')} />
           <MenuItem icon={<Copy className="w-3.5 h-3.5" />} title="Copy with details" hint="City, time & quote" onClick={() => run('details')} />
           <MenuItem icon={<Download className="w-3.5 h-3.5" />} title="Download CSV" hint="Spreadsheet" onClick={() => run('csv')} />
           {shareUrl && (
@@ -187,7 +192,7 @@ function CopyMenu({
               title="Copy link"
               hint="Public page"
               onClick={async () => {
-                const ok = await copyToClipboard(shareUrl)
+                const ok = await copyToClipboard(shareLinkText(shareUrl))
                 if (ok) flash('names')
                 setOpen(false)
               }}

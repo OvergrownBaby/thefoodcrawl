@@ -18,17 +18,44 @@ export type ExportItem = {
   timestampSec?: number | null
 }
 
+const SITE_URL = 'https://thefoodcrawl.com'
+const BRAND = 'Extracted with Foodcrawl'
+
+/** Attribution mark appended to the end of every export / share. */
+export function exportMark(url?: string | null): string {
+  return `— ${BRAND} · ${url || SITE_URL}`
+}
+
+/** Link with the brand mark below it — for the Share button / "Copy link". */
+export function shareLinkText(url: string): string {
+  return `${url}\n\n— ${BRAND}`
+}
+
+/** Append the attribution mark as a footer, separated by a blank line. */
+function withMark(body: string, url?: string | null): string {
+  return `${body}\n\n${exportMark(url)}`
+}
+
 /** One restaurant name per line. The simplest copy-paste. */
-export function toNamesText(items: ExportItem[]): string {
-  return items.map((r) => r.name).join('\n')
+export function toNamesText(items: ExportItem[], opts: { url?: string | null } = {}): string {
+  return withMark(items.map((r) => r.name).join('\n'), opts.url)
+}
+
+/** "Name — m:ss" per line. Name only when there's no timestamp. */
+export function toNamesAndTimesText(items: ExportItem[], opts: { url?: string | null } = {}): string {
+  const body = items
+    .map((r) => {
+      const ts = r.timestampSec != null ? formatTimestamp(r.timestampSec) : null
+      return ts ? `${r.name} — ${ts}` : r.name
+    })
+    .join('\n')
+  return withMark(body, opts.url)
 }
 
 /** Human-readable, numbered list with city, cuisine, timestamp and quote. */
-export function toDetailsText(items: ExportItem[], opts: { title?: string; url?: string } = {}): string {
+export function toDetailsText(items: ExportItem[], opts: { title?: string; url?: string | null } = {}): string {
   const lines: string[] = []
-  if (opts.title) lines.push(opts.title)
-  if (opts.url) lines.push(opts.url)
-  if (lines.length) lines.push('')
+  if (opts.title) lines.push(opts.title, '')
 
   items.forEach((r, i) => {
     const local = r.nameLocal ? ` (${r.nameLocal})` : ''
@@ -38,7 +65,7 @@ export function toDetailsText(items: ExportItem[], opts: { title?: string; url?:
     if (r.quote) lines.push(`   ${ts ? `[${ts}] ` : ''}"${r.quote.trim()}"`)
     else if (ts) lines.push(`   [${ts}]`)
   })
-  return lines.join('\n')
+  return withMark(lines.join('\n'), opts.url)
 }
 
 function csvCell(value: unknown): string {
@@ -46,7 +73,7 @@ function csvCell(value: unknown): string {
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
 }
 
-export function toCsv(items: ExportItem[]): string {
+export function toCsv(items: ExportItem[], opts: { url?: string | null } = {}): string {
   const header = ['name', 'name_local', 'city', 'country', 'cuisine', 'dish', 'timestamp', 'quote']
   const rows = items.map((r) =>
     [
@@ -62,7 +89,7 @@ export function toCsv(items: ExportItem[]): string {
       .map(csvCell)
       .join(',')
   )
-  return [header.join(','), ...rows].join('\n')
+  return [header.join(','), ...rows, '', csvCell(exportMark(opts.url))].join('\n')
 }
 
 /** Copy text to the clipboard with a legacy fallback. Returns success. */
