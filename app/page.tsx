@@ -2,19 +2,14 @@ import Link from 'next/link'
 import { SubmitForm } from '@/components/submit-form'
 import { VideoCard } from '@/components/video-card'
 import { GithubIcon } from '@/components/icons'
-import { ActivityMarquee } from '@/components/activity-marquee'
 import { ActivityStatLine } from '@/components/activity-statline'
 import { getLatestVideos } from '@/lib/videos'
-import { getRecentActivity, getSiteStats } from '@/lib/activity'
+import { getSiteStats } from '@/lib/activity'
 
 export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
-  const [videos, activity, stats] = await Promise.all([
-    getLatestVideos(24),
-    getRecentActivity(24),
-    getSiteStats(),
-  ])
+  const [videos, stats] = await Promise.all([getLatestVideos(24), getSiteStats()])
 
   return (
     <div className="flex-1">
@@ -52,23 +47,17 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Live activity — the single moving channel. Static stat line above it. */}
-      {activity.length > 0 && (
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 pb-3">
+      {/* Static social proof — legible, near-zero motion. */}
+      {stats.places > 0 && (
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 pb-2">
           <ActivityStatLine stats={stats} />
         </div>
       )}
-      {activity.length > 0 && <ActivityMarquee items={activity} showLiveLabel={false} />}
 
-      {/* Video feed — recency-sorted. Skip the top rule when the marquee already
-          provides a divider above, to avoid a doubled border. */}
+      {/* Video feed — recency-sorted */}
       {videos.length > 0 && (
-        <section
-          className={`mx-auto max-w-7xl px-4 sm:px-6 py-10 lg:py-14 ${
-            activity.length > 0 ? '' : 'border-t border-[var(--border)]'
-          }`}
-        >
-          <div className="flex items-end justify-between mb-5 max-w-4xl">
+        <section className="mx-auto max-w-7xl px-4 sm:px-6 py-10 lg:py-14 border-t border-[var(--border)]">
+          <div className="flex items-end justify-between mb-5">
             <div>
               <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--muted)] font-semibold">
                 Feed
