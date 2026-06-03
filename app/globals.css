@@ -448,3 +448,29 @@ body {
 .ring-inset-soft {
   box-shadow: inset 0 0 0 1px rgba(214, 198, 163, 0.45);
 }
+
+/* Horizontal marquee — track is duplicated, so -50% loops seamlessly */
+@keyframes fm-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.fm-marquee-track {
+  display: inline-flex;
+  width: max-content;
+  animation: fm-marquee var(--fm-marquee-dur, 40s) linear infinite;
+}
+.fm-marquee-track:hover {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fm-marquee-track { animation: none; }
+}
+
+/* Live pulse dot */
+@keyframes fm-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.82); }
+}
+.fm-pulse {
+  animation: fm-pulse 1.8s ease-in-out infinite;
+}

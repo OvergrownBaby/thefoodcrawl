@@ -186,6 +186,7 @@ export function LiveExtractionView({
               items={state.restaurants.filter((r) => !r.skipped)}
               shareUrl={shareUrlFor(state) ? absoluteUrl(shareUrlFor(state)!) : null}
               shareTitle={state.video?.title}
+              menuPlacement="up"
             />
           </div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-1">

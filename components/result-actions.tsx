@@ -29,6 +29,7 @@ export function ResultActions({
   shareTitle,
   className,
   variant = 'full',
+  menuPlacement = 'down',
 }: {
   items: ExportItem[]
   shareUrl?: string | null
@@ -36,6 +37,9 @@ export function ResultActions({
   className?: string
   /** 'full' = labelled buttons (live view); 'compact' = icon buttons (page header). */
   variant?: 'full' | 'compact'
+  /** Open the copy menu upward — use when the trigger sits at the bottom of an
+   *  `overflow-hidden` container that would otherwise clip a downward menu. */
+  menuPlacement?: 'down' | 'up'
 }) {
   const compact = variant === 'compact'
   const disabled = items.length === 0
@@ -43,7 +47,14 @@ export function ResultActions({
   return (
     <div className={cn('flex items-center gap-2', className)}>
       {shareUrl && <ShareButton url={shareUrl} title={shareTitle} compact={compact} />}
-      <CopyMenu items={items} shareTitle={shareTitle} shareUrl={shareUrl} compact={compact} disabled={disabled} />
+      <CopyMenu
+        items={items}
+        shareTitle={shareTitle}
+        shareUrl={shareUrl}
+        compact={compact}
+        disabled={disabled}
+        placement={menuPlacement}
+      />
     </div>
   )
 }
@@ -104,12 +115,14 @@ function CopyMenu({
   shareUrl,
   compact,
   disabled,
+  placement,
 }: {
   items: ExportItem[]
   shareTitle?: string | null
   shareUrl?: string | null
   compact: boolean
   disabled: boolean
+  placement: 'down' | 'up'
 }) {
   const [open, setOpen] = useState(false)
   const [done, setDone] = useState<CopyAction | null>(null)
@@ -180,7 +193,10 @@ function CopyMenu({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-30 mt-1.5 w-56 rounded-xl border border-[var(--border)] bg-white p-1 shadow-[0_16px_40px_-16px_rgba(0,0,0,0.3)]"
+          className={cn(
+            'absolute right-0 z-50 w-56 rounded-xl border border-[var(--border)] bg-white p-1 shadow-[0_16px_40px_-16px_rgba(0,0,0,0.3)]',
+            placement === 'up' ? 'bottom-full mb-1.5' : 'top-full mt-1.5'
+          )}
         >
           <MenuItem icon={<List className="w-3.5 h-3.5" />} title="Copy names" hint="One per line" onClick={() => run('names')} />
           <MenuItem icon={<Clock className="w-3.5 h-3.5" />} title="Copy names + times" hint="Name — timestamp" onClick={() => run('names-times')} />

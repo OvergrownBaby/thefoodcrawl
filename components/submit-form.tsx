@@ -8,26 +8,7 @@ import { LiveExtractionView } from './live-extraction-view'
 import { getStoredKey } from '@/lib/byok'
 import { useStreamExtract } from '@/lib/use-stream-extract'
 
-const PRESETS: Array<{ label: string; url: string }> = [
-  {
-    label: 'Mark Wiens · HK typhoon crab',
-    url: 'https://www.youtube.com/watch?v=z-iAddtjM7A',
-  },
-  {
-    label: 'Blondie · Shenzhen',
-    url: 'https://www.youtube.com/watch?v=U8VGHShDols',
-  },
-  {
-    label: 'Mark Wiens · Texas BBQ',
-    url: 'https://www.youtube.com/watch?v=3n227UzYczY',
-  },
-]
-
-export function SubmitForm({
-  showPresets = false,
-}: {
-  showPresets?: boolean
-} = {}) {
+export function SubmitForm() {
   const [url, setUrl] = useState('')
   const [keyModalOpen, setKeyModalOpen] = useState(false)
   const [hasUserKey, setHasUserKey] = useState(false)
@@ -103,24 +84,6 @@ export function SubmitForm({
             )}
           </button>
         </div>
-
-        {showPresets && state.status === 'idle' && (
-          <div className="mt-3 flex items-center flex-wrap gap-2">
-            <span className="text-[11px] text-[var(--muted)] uppercase tracking-wider font-medium">
-              try:
-            </span>
-            {PRESETS.map((p) => (
-              <button
-                key={p.url}
-                type="button"
-                onClick={() => setUrl(p.url)}
-                className="fm-btn px-2.5 py-1 rounded-full bg-[var(--muted-soft)] hover:bg-[var(--background-elev)] border border-[var(--border)] hover:border-[var(--accent)]/40 text-xs text-[var(--foreground-soft)] hover:text-[var(--foreground)] transition"
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-        )}
 
         <div className="mt-3 flex items-center justify-between gap-3 text-xs text-[var(--muted)]">
           <span className="truncate">
