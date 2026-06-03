@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { supabaseAdmin } from '@/lib/supabase-server'
+import { JsonLd } from '@/components/json-ld'
+import { videoJsonLd } from '@/lib/jsonld'
 import { VideoPageView, type VideoPageMention, type VideoPageVideo } from '@/components/video-page-view'
 import type { SourceKind, Platform } from '@/lib/types'
 
@@ -152,7 +154,27 @@ export default async function VideoPage({
       })),
     }))
 
-  return <VideoPageView video={videoProps} mentions={mentionProps} />
+  // Dedupe restaurants featured in this video (a video can mention one twice).
+  const videoRestaurants = Array.from(
+    new Map(mentionProps.map((m) => [m.restaurant.id, m.restaurant])).values()
+  )
+
+  return (
+    <>
+      <JsonLd
+        data={videoJsonLd({
+          videoUrl: video.url,
+          title: video.title,
+          thumbnailUrl: video.thumbnail_url,
+          uploadDate: video.published_at,
+          youtubeId: videoProps.videoId,
+          creator: videoProps.creator,
+          restaurants: videoRestaurants,
+        })}
+      />
+      <VideoPageView video={videoProps} mentions={mentionProps} />
+    </>
+  )
 }
 
 function relativeTime(iso: string): string {

@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getRestaurant } from '@/lib/data'
+import { JsonLd } from '@/components/json-ld'
+import { placeJsonLd } from '@/lib/jsonld'
 import { AtlasMap } from '@/components/atlas-map'
 import { SourceBadge } from '@/components/source-badge'
 import { CreatorAvatar } from '@/components/creator-avatar'
@@ -43,6 +45,7 @@ export default async function PlacePage({
 
   return (
     <div className="flex-1">
+      <JsonLd data={placeJsonLd(restaurant, mentions)} />
       <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
         <Link
           href="/atlas"
