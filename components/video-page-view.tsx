@@ -6,8 +6,10 @@ import { AtlasMap } from './atlas-map'
 import { CreatorAvatar } from './creator-avatar'
 import { SourceBadge } from './source-badge'
 import { YouTubeClip } from './youtube-clip'
+import { ResultActions } from './result-actions'
 import { photoUrl } from '@/lib/photo'
 import { formatTimestamp, cn } from '@/lib/utils'
+import type { ExportItem } from '@/lib/export-extraction'
 import type { Restaurant, SourceKind, Platform } from '@/lib/types'
 import { ArrowLeft, ExternalLink, Play, MapPin, X } from 'lucide-react'
 
@@ -90,6 +92,28 @@ export function VideoPageView({
     [mentions]
   )
 
+  const exportItems: ExportItem[] = useMemo(
+    () =>
+      mentions.map((m) => ({
+        name: m.restaurant.name,
+        nameLocal: m.restaurant.nameLocal,
+        city: m.restaurant.city,
+        country: m.restaurant.country,
+        cuisine: m.restaurant.cuisine,
+        dish: m.dish ?? (m.dishes[0]?.name ?? null),
+        quote: m.quote,
+        timestampSec: m.timestampSec,
+      })),
+    [mentions]
+  )
+
+  // Absolute URL for this page, resolved after mount (no `window` on the server).
+  const [pageUrl, setPageUrl] = useState<string | null>(null)
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPageUrl(window.location.href)
+  }, [])
+
   const selectedMention = useMemo(
     () => (selectedId ? mentions.find((m) => m.restaurant.id === selectedId) ?? null : null),
     [selectedId, mentions]
@@ -122,7 +146,7 @@ export function VideoPageView({
       >
         {/* Desktop-only header: back + player + chapter rail */}
         <header className="hidden lg:block border-b border-[var(--border)]">
-          <div className="p-4 pb-2">
+          <div className="p-4 pb-2 flex items-center justify-between gap-2">
             <Link
               href="/"
               className="inline-flex items-center gap-1.5 text-xs text-[var(--muted)] hover:text-[var(--foreground)]"
@@ -130,6 +154,12 @@ export function VideoPageView({
               <ArrowLeft className="w-3.5 h-3.5" />
               Back
             </Link>
+            <ResultActions
+              items={exportItems}
+              shareUrl={pageUrl}
+              shareTitle={video.title}
+              variant="compact"
+            />
           </div>
           <div className="px-4">
             {video.videoId ? (
@@ -217,7 +247,7 @@ export function VideoPageView({
       >
         {/* Mobile-only: back + player + meta + chapter rail */}
         <div className="lg:hidden">
-          <div className="px-4 pt-3 pb-2">
+          <div className="px-4 pt-3 pb-2 flex items-center justify-between gap-2">
             <Link
               href="/"
               className="inline-flex items-center gap-1.5 text-sm text-[var(--muted)] hover:text-[var(--foreground)]"
@@ -225,6 +255,12 @@ export function VideoPageView({
               <ArrowLeft className="w-3.5 h-3.5" />
               Back
             </Link>
+            <ResultActions
+              items={exportItems}
+              shareUrl={pageUrl}
+              shareTitle={video.title}
+              variant="compact"
+            />
           </div>
           {video.videoId ? (
             <YouTubeClip

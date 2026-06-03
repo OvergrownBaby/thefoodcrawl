@@ -18,3 +18,8 @@ export function priceDots(level: 1 | 2 | 3 | 4 | undefined): string {
   if (!level) return ''
   return '$'.repeat(level)
 }
+
+/** Public page for a video's extraction results. Strips the `yt:` id prefix. */
+export function videoSharePath(videoId: string): string {
+  return `/v/${videoId.startsWith('yt:') ? videoId.slice(3) : videoId}`
+}
