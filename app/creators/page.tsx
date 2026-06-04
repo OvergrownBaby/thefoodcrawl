@@ -6,8 +6,9 @@ import type { Creator } from '@/lib/types'
 export const dynamic = 'force-dynamic'
 
 export const metadata = {
-  title: 'Creators — Foodcrawl',
+  title: 'Creators',
   description: 'Every food creator whose picks have been mapped on Foodcrawl.',
+  alternates: { canonical: '/creators' },
 }
 
 export default async function CreatorsPage() {

@@ -4,7 +4,9 @@ import { AtlasView } from '@/components/atlas-view'
 export const dynamic = 'force-dynamic'
 
 export const metadata = {
-  title: 'Atlas — Foodcrawl',
+  title: 'Atlas',
+  description: 'Every restaurant our creators have mapped — browse the full atlas.',
+  alternates: { canonical: '/atlas' },
 }
 
 export default async function AtlasPage() {

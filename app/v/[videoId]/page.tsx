@@ -93,6 +93,7 @@ export async function generateMetadata({
   return {
     title: data.video.title ?? 'Video',
     description: `${count} restaurants pinned from ${data.video.creators?.name ?? 'this video'}.`,
+    alternates: { canonical: `/v/${videoId}` },
   }
 }
 

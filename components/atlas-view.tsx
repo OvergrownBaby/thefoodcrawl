@@ -7,6 +7,7 @@ import { AtlasMap } from './atlas-map'
 import { CreatorAvatar } from './creator-avatar'
 import { SourceBadge } from './source-badge'
 import { formatTimestamp, priceDots, cn, placeTitle } from '@/lib/utils'
+import { placePath } from '@/lib/place-url'
 import { X, MapPin, ExternalLink, Loader2, ChevronDown, ChevronUp } from 'lucide-react'
 
 type Props = {
@@ -657,7 +658,7 @@ function DetailPanel({
           Open in Maps
         </a>
         <a
-          href={`/p/${restaurant.id}`}
+          href={placePath(restaurant)}
           className="flex-1 inline-flex items-center justify-center gap-1.5 bg-white text-[var(--foreground)] border border-[var(--border)] text-sm font-medium py-2 rounded-xl hover:border-[var(--accent)]"
         >
           Details →

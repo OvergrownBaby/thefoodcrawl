@@ -1,4 +1,5 @@
 import type { Restaurant, Creator, Mention } from './types'
+import { placePath } from './place-url'
 
 // Structured data (schema.org / JSON-LD). This is the GEO lever: it lets
 // Google show rich results AND lets answer engines (ChatGPT, Perplexity,
@@ -36,9 +37,9 @@ type CreatorLike = { slug: string; name: string; url?: string | null; avatarUrl?
 function restaurantNode(r: RestaurantLike): Record<string, unknown> {
   const node: Record<string, unknown> = {
     '@type': 'Restaurant',
-    '@id': `${SITE}/p/${r.id}#restaurant`,
+    '@id': `${SITE}${placePath(r)}#restaurant`,
     name: r.name,
-    url: `${SITE}/p/${r.id}`,
+    url: `${SITE}${placePath(r)}`,
     address: {
       '@type': 'PostalAddress',
       addressLocality: r.city,

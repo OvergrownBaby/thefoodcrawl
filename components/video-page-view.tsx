@@ -8,6 +8,7 @@ import { SourceBadge } from './source-badge'
 import { YouTubeClip } from './youtube-clip'
 import { ResultActions } from './result-actions'
 import { photoUrl } from '@/lib/photo'
+import { placePath } from '@/lib/place-url'
 import { formatTimestamp, cn, placeTitle } from '@/lib/utils'
 import type { ExportItem } from '@/lib/export-extraction'
 import type { Restaurant, SourceKind, Platform } from '@/lib/types'
@@ -540,7 +541,7 @@ function PlaceDetailPanel({
           Open in Maps
         </a>
         <Link
-          href={`/p/${r.id}`}
+          href={placePath(r)}
           className="flex-1 inline-flex items-center justify-center gap-1.5 bg-white text-[var(--foreground)] border border-[var(--border)] text-xs font-medium py-2 rounded-xl hover:border-[var(--accent)]"
         >
           Details →

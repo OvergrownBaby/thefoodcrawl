@@ -3,6 +3,7 @@ import type { Restaurant } from '@/lib/types'
 import { CreatorAvatar } from './creator-avatar'
 import { priceDots } from '@/lib/utils'
 import { photoUrl } from '@/lib/photo'
+import { placePath } from '@/lib/place-url'
 
 export function RestaurantCard({
   restaurant,
@@ -14,7 +15,7 @@ export function RestaurantCard({
   const photo = photoUrl(restaurant.photoName, 400)
   return (
     <Link
-      href={`/p/${restaurant.id}`}
+      href={placePath(restaurant)}
       className="card-soft group block overflow-hidden"
     >
       {photo && (

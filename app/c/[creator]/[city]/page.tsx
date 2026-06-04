@@ -22,6 +22,7 @@ export async function generateMetadata({
   return {
     title: `${data.creator.name}'s ${city}`,
     description: `${data.restaurants.filter((r) => r.city === city).length} restaurants in ${city} recommended by ${data.creator.name}.`,
+    alternates: { canonical: `/c/${slug}/${encodeURIComponent(city)}` },
   }
 }
 

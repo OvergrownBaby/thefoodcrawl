@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { MapPin, Clapperboard } from 'lucide-react'
 import { photoUrl } from '@/lib/photo'
 import type { ActivityItem } from '@/lib/activity'
+import { placePath } from '@/lib/place-url'
 
 /**
  * Infinite horizontal ticker of recent activity. The track is rendered twice
@@ -63,7 +64,7 @@ function ActivityChip({ item }: { item: ActivityItem }) {
     const where = [item.city, item.country].filter(Boolean)[0]
     return (
       <Link
-        href={`/p/${item.id}`}
+        href={placePath(item)}
         className="group inline-flex shrink-0 items-center gap-2 rounded-full border border-[var(--border)] bg-white py-1 pl-1 pr-3 shadow-sm transition hover:border-[var(--accent)]/50"
       >
         <span className="grid h-6 w-6 place-items-center overflow-hidden rounded-full bg-[var(--muted-soft)] text-[var(--accent)]">

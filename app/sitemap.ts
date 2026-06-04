@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { supabaseAdmin } from '@/lib/supabase-server'
+import { placePath } from '@/lib/place-url'
 
 // Regenerate at most hourly so newly-added videos/places/creators get
 // discovered by search + AI crawlers without hitting the DB on every request.
@@ -25,7 +26,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [videosRes, creatorsRes, placesRes] = await Promise.all([
     sb.from('videos').select('id, published_at, created_at').limit(50000),
     sb.from('creators').select('slug').limit(50000),
-    sb.from('restaurants').select('id, city, mentions(videos(creator_slug))').limit(50000),
+    sb.from('restaurants').select('id, name, city, mentions(videos(creator_slug))').limit(50000),
   ])
 
   // Videos -> /v/{youtubeId}  (DB stores ids as "yt:VIDEOID"; the route strips the prefix)
@@ -55,6 +56,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   type VideoRef = { creator_slug: string | null }
   type PlaceRow = {
     id: string
+    name: string | null
     city: string | null
     // Supabase types the embedded relation as an array even when it's to-one,
     // so accept either shape and normalize at runtime.
@@ -62,7 +64,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
   for (const r of (placesRes.data ?? []) as unknown as PlaceRow[]) {
     entries.push({
-      url: `${SITE}/p/${r.id}`,
+      url: `${SITE}${placePath(r)}`,
       lastModified: now,
       changeFrequency: 'monthly',
       priority: 0.6,

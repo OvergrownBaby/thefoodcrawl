@@ -5,6 +5,7 @@ import maplibregl, { Map as MLMap, Marker } from 'maplibre-gl'
 import type { Restaurant } from '@/lib/types'
 import { photoUrl } from '@/lib/photo'
 import { placeTitle } from '@/lib/utils'
+import { placePath } from '@/lib/place-url'
 
 type Props = {
   restaurants: Restaurant[]
@@ -161,7 +162,7 @@ export function AtlasMap({
         ? document.createElement('button')
         : document.createElement('a')
       if (el instanceof HTMLButtonElement) el.type = 'button'
-      if (el instanceof HTMLAnchorElement) el.href = `/p/${r.id}`
+      if (el instanceof HTMLAnchorElement) el.href = placePath(r)
       el.className = 'fm-marker'
       const markerTitle = placeTitle(r.name, r.nameLocal).primary
       el.title = markerTitle

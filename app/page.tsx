@@ -8,6 +8,10 @@ import { getSiteStats } from '@/lib/activity'
 
 export const dynamic = 'force-dynamic'
 
+export const metadata = {
+  alternates: { canonical: '/' },
+}
+
 export default async function HomePage() {
   const [videos, stats] = await Promise.all([getLatestVideos(24), getSiteStats()])
 

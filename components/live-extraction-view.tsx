@@ -9,6 +9,7 @@ import { SourceBadge } from './source-badge'
 import { ResultActions } from './result-actions'
 import { photoUrl } from '@/lib/photo'
 import { formatTimestamp, cn, videoSharePath, placeTitle } from '@/lib/utils'
+import { placePath } from '@/lib/place-url'
 import type { Restaurant, SourceKind } from '@/lib/types'
 import { Loader2, X, ArrowRight, ExternalLink, MapPin, Key, AlertTriangle, Wifi } from 'lucide-react'
 
@@ -293,7 +294,7 @@ function ArrivalCard({
           )}
           {arrival.id ? (
             <Link
-              href={`/p/${arrival.id}`}
+              href={placePath({ ...arrival, id: arrival.id })}
               className="font-semibold hover:text-[var(--accent)] transition"
             >
               {title.primary}

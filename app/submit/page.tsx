@@ -2,7 +2,9 @@ import { SubmitForm } from '@/components/submit-form'
 import { SourceBadge } from '@/components/source-badge'
 
 export const metadata = {
-  title: 'Drop a link — Foodcrawl',
+  title: 'Drop a link',
+  description: 'Paste any YouTube, TikTok, Reddit or article link and we map every restaurant in it.',
+  alternates: { canonical: '/submit' },
 }
 
 export default function SubmitPage() {

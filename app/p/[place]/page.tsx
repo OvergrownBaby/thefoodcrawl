@@ -11,6 +11,7 @@ import { youtubeIdFromUrl } from '@/lib/fetchers/youtube'
 import { formatTimestamp, priceDots, placeTitle } from '@/lib/utils'
 import { ExternalLink, MapPin, ArrowLeft, Utensils } from 'lucide-react'
 import { photoUrl } from '@/lib/photo'
+import { placePath, placeIdFromParam } from '@/lib/place-url'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,12 +20,14 @@ export async function generateMetadata({
 }: {
   params: Promise<{ place: string }>
 }) {
-  const { place: id } = await params
+  const { place } = await params
+  const id = placeIdFromParam(place)
   const data = await getRestaurant(id)
   if (!data) return { title: 'Not found' }
   return {
-    title: `${data.restaurant.name} — Foodcrawl`,
+    title: `${data.restaurant.name} — ${data.restaurant.city}`,
     description: `${data.restaurant.cuisine ?? 'Restaurant'} in ${data.restaurant.city}. Recommended ${data.mentions.length} ${data.mentions.length === 1 ? 'time' : 'times'}.`,
+    alternates: { canonical: placePath(data.restaurant) },
   }
 }
 
@@ -33,7 +36,8 @@ export default async function PlacePage({
 }: {
   params: Promise<{ place: string }>
 }) {
-  const { place: id } = await params
+  const { place } = await params
+  const id = placeIdFromParam(place)
   const data = await getRestaurant(id)
   if (!data) notFound()
   const { restaurant, mentions } = data

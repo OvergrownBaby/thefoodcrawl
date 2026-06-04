@@ -19,8 +19,9 @@ export async function generateMetadata({
   const data = await getCreator(slug)
   if (!data) return { title: 'Not found' }
   return {
-    title: `${data.creator.name} — Foodcrawl`,
+    title: data.creator.name,
     description: `${data.restaurants.length} restaurants recommended by ${data.creator.name}.`,
+    alternates: { canonical: `/c/${slug}` },
   }
 }
 
