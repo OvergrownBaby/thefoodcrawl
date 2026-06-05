@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { supabaseAdmin } from '@/lib/supabase-server'
 import { JsonLd } from '@/components/json-ld'
-import { videoJsonLd } from '@/lib/jsonld'
+import { videoJsonLd, breadcrumbJsonLd } from '@/lib/jsonld'
 import { VideoPageView, type VideoPageMention, type VideoPageVideo } from '@/components/video-page-view'
 import type { SourceKind, Platform } from '@/lib/types'
 
@@ -172,6 +172,15 @@ export default async function VideoPage({
           creator: videoProps.creator,
           restaurants: videoRestaurants,
         })}
+      />
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: 'Home', url: '/' },
+          ...(videoProps.creator
+            ? [{ name: videoProps.creator.name, url: `/c/${videoProps.creator.slug}` }]
+            : []),
+          { name: video.title ?? 'Video', url: `/v/${videoId}` },
+        ])}
       />
       <VideoPageView video={videoProps} mentions={mentionProps} />
     </>

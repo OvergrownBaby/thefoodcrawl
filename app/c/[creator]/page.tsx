@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getCreator } from '@/lib/data'
 import { JsonLd } from '@/components/json-ld'
-import { creatorJsonLd } from '@/lib/jsonld'
+import { creatorJsonLd, breadcrumbJsonLd } from '@/lib/jsonld'
 import { CreatorAvatar } from '@/components/creator-avatar'
 import { RestaurantCard } from '@/components/restaurant-card'
 import { AtlasMap } from '@/components/atlas-map'
@@ -46,6 +46,13 @@ export default async function CreatorPage({
   return (
     <div className="flex-1">
       <JsonLd data={creatorJsonLd(creator, restaurants)} />
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: 'Home', url: '/' },
+          { name: 'Creators', url: '/creators' },
+          { name: creator.name, url: `/c/${slug}` },
+        ])}
+      />
       {/* Header */}
       <section className="border-b border-[var(--border)]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12 flex items-start gap-6">

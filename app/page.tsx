@@ -5,6 +5,8 @@ import { GithubIcon } from '@/components/icons'
 import { ActivityStatLine } from '@/components/activity-statline'
 import { getLatestVideos } from '@/lib/videos'
 import { getSiteStats } from '@/lib/activity'
+import { JsonLd } from '@/components/json-ld'
+import { siteJsonLd, faqJsonLd } from '@/lib/jsonld'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,11 +14,35 @@ export const metadata = {
   alternates: { canonical: '/' },
 }
 
+// Visible FAQ + FAQPage schema, aimed squarely at the queries AI answers with
+// "no tool exists": convert a YouTube food video to a map / Google Maps list,
+// find restaurants mentioned in a vlog, map every place a creator visited.
+const HOME_FAQS = [
+  {
+    q: 'How do I find the restaurants mentioned in a food video?',
+    a: 'Paste the video link into Foodcrawl. It reads the transcript, pulls out every restaurant named, and drops them on a map — each with the exact quote and the timestamp it was said. Works with YouTube, TikTok, Reddit threads and articles.',
+  },
+  {
+    q: 'Can I turn a YouTube food video into a Google Maps list?',
+    a: "Yes. Paste the YouTube link and Foodcrawl extracts each restaurant with its location — open any pin in Google Maps in one tap. It's free, runs in the browser, and needs no app.",
+  },
+  {
+    q: 'Is there a tool to map every restaurant a YouTuber visited?',
+    a: 'Foodcrawl builds a map per creator: every restaurant across all of their parsed videos, grouped by city. Browse the creators page, or paste more of their videos to keep adding to it.',
+  },
+  {
+    q: 'Is Foodcrawl free?',
+    a: 'Yes — it is open-source (AGPL-3.0), with no ads, no subscription, and no account required.',
+  },
+]
+
 export default async function HomePage() {
   const [videos, stats] = await Promise.all([getLatestVideos(24), getSiteStats()])
 
   return (
     <div className="flex-1">
+      <JsonLd data={siteJsonLd()} />
+      <JsonLd data={faqJsonLd(HOME_FAQS)} />
       {/* Hero: one clear, static value prop. The "alive" lives in the ticker
           below the composer — a single peripheral channel, not the headline. */}
       <section className="mx-auto max-w-5xl px-4 sm:px-6 pt-10 sm:pt-14 pb-7">
@@ -83,6 +109,20 @@ export default async function HomePage() {
           </div>
         </section>
       )}
+
+      {/* FAQ — visible Q&A backing the FAQPage schema; targets the "no tool
+          exists" queries directly on the highest-authority page. */}
+      <section className="mx-auto max-w-3xl px-4 sm:px-6 py-12 border-t border-[var(--border)]">
+        <h2 className="fm-display text-2xl mb-6">Questions</h2>
+        <dl className="space-y-6">
+          {HOME_FAQS.map((f) => (
+            <div key={f.q}>
+              <dt className="font-semibold text-[var(--foreground)]">{f.q}</dt>
+              <dd className="mt-1.5 text-[var(--muted)] leading-relaxed">{f.a}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
     </div>
   )
 }

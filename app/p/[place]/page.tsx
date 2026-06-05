@@ -2,7 +2,8 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getRestaurant } from '@/lib/data'
 import { JsonLd } from '@/components/json-ld'
-import { placeJsonLd } from '@/lib/jsonld'
+import { placeJsonLd, breadcrumbJsonLd } from '@/lib/jsonld'
+import { cityPath } from '@/lib/cities'
 import { AtlasMap } from '@/components/atlas-map'
 import { SourceBadge } from '@/components/source-badge'
 import { CreatorAvatar } from '@/components/creator-avatar'
@@ -50,6 +51,13 @@ export default async function PlacePage({
   return (
     <div className="flex-1">
       <JsonLd data={placeJsonLd(restaurant, mentions)} />
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: 'Home', url: '/' },
+          { name: restaurant.city, url: cityPath(restaurant.city) },
+          { name: restaurant.name, url: placePath(restaurant) },
+        ])}
+      />
       <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
         <Link
           href="/atlas"
@@ -92,7 +100,13 @@ export default async function PlacePage({
               <p className="mt-2 text-sm text-[var(--muted)]">
                 {restaurant.cuisine}
                 <span className="mx-2">·</span>
-                {restaurant.city}, {restaurant.country}
+                <Link
+                  href={cityPath(restaurant.city)}
+                  className="hover:text-[var(--accent)] hover:underline underline-offset-2"
+                >
+                  {restaurant.city}
+                </Link>
+                , {restaurant.country}
               </p>
 
               <div className="mt-5 flex gap-2">

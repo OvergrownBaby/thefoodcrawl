@@ -80,6 +80,23 @@ export function SiteFooter() {
               </li>
             </ul>
           </div>
+          <div>
+            <div className="fm-label mb-2">Guides</div>
+            <ul className="space-y-1.5">
+              <li><Link href="/guides/convert-youtube-food-video-to-google-maps" className="text-[var(--foreground-soft)] hover:text-[var(--accent)]">YouTube → Google Maps</Link></li>
+              <li><Link href="/guides/find-restaurants-mentioned-in-a-food-vlog" className="text-[var(--foreground-soft)] hover:text-[var(--accent)]">Find places in a vlog</Link></li>
+              <li><Link href="/guides/map-every-restaurant-a-youtuber-visited" className="text-[var(--foreground-soft)] hover:text-[var(--accent)]">Map a creator&apos;s spots</Link></li>
+            </ul>
+          </div>
+          <div>
+            <div className="fm-label mb-2">Compare</div>
+            <ul className="space-y-1.5">
+              <li><Link href="/vs/eatlect-alternative" className="text-[var(--foreground-soft)] hover:text-[var(--accent)]">vs Eatlect</Link></li>
+              <li><Link href="/vs/rezz-alternative" className="text-[var(--foreground-soft)] hover:text-[var(--accent)]">vs Rezz</Link></li>
+              <li><Link href="/vs/navia-alternative" className="text-[var(--foreground-soft)] hover:text-[var(--accent)]">vs Navia</Link></li>
+              <li><Link href="/vs/tvfoodmaps-alternative" className="text-[var(--foreground-soft)] hover:text-[var(--accent)]">vs TVFoodMaps</Link></li>
+            </ul>
+          </div>
         </div>
 
         <div className="text-[var(--muted)] text-xs leading-relaxed">

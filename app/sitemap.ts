@@ -1,6 +1,9 @@
 import type { MetadataRoute } from 'next'
 import { supabaseAdmin } from '@/lib/supabase-server'
 import { placePath } from '@/lib/place-url'
+import { citySlug } from '@/lib/cities'
+import { COMPARISONS } from '@/lib/comparisons'
+import { GUIDES } from '@/lib/guides'
 
 // Regenerate at most hourly so newly-added videos/places/creators get
 // discovered by search + AI crawlers without hitting the DB on every request.
@@ -53,6 +56,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Restaurants -> /p/{id}  +  collect distinct creator x city pairs
   const creatorCity = new Set<string>()
+  const cities = new Set<string>()
   type VideoRef = { creator_slug: string | null }
   type PlaceRow = {
     id: string
@@ -70,6 +74,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     })
     if (!r.city) continue
+    cities.add(r.city)
     for (const m of r.mentions ?? []) {
       const v = m?.videos
       const slug = Array.isArray(v) ? v[0]?.creator_slug : v?.creator_slug
@@ -86,6 +91,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'weekly',
       priority: 0.85,
     })
+  }
+
+  // Global city pages -> /city/{slug}
+  for (const city of cities) {
+    entries.push({
+      url: `${SITE}/city/${citySlug(city)}`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    })
+  }
+
+  // Comparison + guide landing pages (static config)
+  for (const c of COMPARISONS) {
+    entries.push({ url: `${SITE}/vs/${c.slug}`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 })
+  }
+  for (const g of GUIDES) {
+    entries.push({ url: `${SITE}/guides/${g.slug}`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 })
   }
 
   return entries

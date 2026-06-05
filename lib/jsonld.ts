@@ -117,6 +117,66 @@ export function creatorCityJsonLd(creator: Creator, city: string, restaurants: R
   return graph([itemList(restaurants, `Restaurants in ${city} recommended by ${creator.name}`)])
 }
 
+/** Home — WebSite + Organization. Establishes the brand entity so Google and
+ *  answer engines have a canonical node to attach citations to. No SearchAction:
+ *  there's no free-text search endpoint, and claiming one we don't have is the
+ *  kind of schema lie that earns a manual action. */
+export function siteJsonLd(): object {
+  const org = {
+    '@type': 'Organization',
+    '@id': `${SITE}/#org`,
+    name: 'Foodcrawl',
+    url: SITE,
+    logo: `${SITE}/icon`,
+    sameAs: [
+      'https://github.com/OvergrownBaby/thefoodcrawl',
+      'https://x.com/OvergrownBaby',
+    ],
+  }
+  const website = {
+    '@type': 'WebSite',
+    '@id': `${SITE}/#website`,
+    name: 'Foodcrawl',
+    url: SITE,
+    publisher: { '@id': `${SITE}/#org` },
+    description:
+      'Paste any YouTube, TikTok, Reddit or article link and Foodcrawl extracts every restaurant mentioned onto an interactive map, with verbatim quotes and timestamps.',
+  }
+  return graph([org, website])
+}
+
+/** Breadcrumb trail for any page. Pass site-relative paths; they get absolutized. */
+export function breadcrumbJsonLd(items: Array<{ name: string; url: string }>): object {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((it, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: it.name,
+      item: abs(it.url),
+    })),
+  }
+}
+
+/** FAQ structured data — prime AI-citation bait for "is there a tool that…" queries. */
+export function faqJsonLd(qas: Array<{ q: string; a: string }>): object {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: qas.map((qa) => ({
+      '@type': 'Question',
+      name: qa.q,
+      acceptedAnswer: { '@type': 'Answer', text: qa.a },
+    })),
+  }
+}
+
+/** /city/[city] — every restaurant mapped in a city, across all creators. */
+export function cityJsonLd(city: string, restaurants: Restaurant[]): object {
+  return graph([itemList(restaurants, `Restaurants in ${city} from food videos`)])
+}
+
 /** /v/[videoId] — the VideoObject + the restaurants it features. Fed raw rows. */
 export function videoJsonLd(args: {
   videoUrl: string
