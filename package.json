@@ -17,6 +17,7 @@
     "@anthropic-ai/sdk": "^0.96.0",
     "@mozilla/readability": "^0.6.0",
     "@supabase/supabase-js": "^2.105.4",
+    "@vercel/analytics": "^2.0.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "jsdom": "^29.1.1",
