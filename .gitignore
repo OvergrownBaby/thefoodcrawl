@@ -40,3 +40,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 !.env.example
+
+# worker secrets/session
+worker/.env
+worker/yt-state.json
+
+# session/cookies — never commit
+worker/yt-profile/
+worker/cookies.json
