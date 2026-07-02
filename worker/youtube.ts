@@ -3,20 +3,22 @@ import fs from 'node:fs'
 import { config } from './config'
 
 /**
- * Launch a Chromium context with the captured logged-in session.
- * On the headless box, run the worker under `xvfb-run` and keep HEADLESS=false
- * so YouTube sees a real (headful) browser, which is far less bot-detectable.
+ * Launch a PERSISTENT Chromium context from the profile dir. The session lives
+ * in the profile and refreshes its own cookies as the worker keeps using it —
+ * so it doesn't go stale like a static cookie export. Seed it once with
+ * `worker/seed-profile.ts`.
+ *
+ * On the headless box, run under `xvfb-run` with HEADLESS=false so YouTube sees
+ * a real (headful) browser, which is far less bot-detectable.
  */
 export async function launchContext(): Promise<BrowserContext> {
-  if (!fs.existsSync(config.stateFile)) {
-    throw new Error(`no session file at ${config.stateFile} — run worker/login-capture.ts first`)
+  if (!fs.existsSync(config.profileDir)) {
+    throw new Error(`no session profile at ${config.profileDir} — run worker/seed-profile.ts first`)
   }
-  const browser = await chromium.launch({
+  return chromium.launchPersistentContext(config.profileDir, {
     headless: config.headless,
+    channel: config.channel,
     args: ['--no-sandbox', '--disable-blink-features=AutomationControlled'],
-  })
-  return browser.newContext({
-    storageState: config.stateFile,
     userAgent:
       'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
     locale: 'en-US',
@@ -49,20 +51,24 @@ export async function postComment(
   const page = await ctx.newPage()
   try {
     await page.goto(`https://www.youtube.com/watch?v=${videoId}`, {
-      waitUntil: 'domcontentloaded',
-      timeout: 45000,
+      waitUntil: 'commit',
+      timeout: 90000,
     })
     await dismissConsent(page)
-    await page.waitForTimeout(2500)
-    await page.evaluate(() => window.scrollTo(0, 700))
-    await page.waitForTimeout(2500)
+    await page.waitForTimeout(3000)
+    // step-scroll to trigger lazy-loaded comments (slow networks need this)
+    for (const y of [400, 900, 1400]) {
+      await page.evaluate((yy) => window.scrollTo(0, yy), y)
+      await page.waitForTimeout(2000)
+    }
 
     if (await page.locator('text=/sign in to comment/i').count()) {
       return { ok: false, reason: 'NOT_LOGGED_IN' }
     }
 
     const placeholder = page.locator('#simplebox-placeholder, #placeholder-area').first()
-    await placeholder.click({ timeout: 15000 })
+    await placeholder.waitFor({ state: 'visible', timeout: 30000 })
+    await placeholder.click({ timeout: 10000 })
 
     const input = page.locator('#contenteditable-root')
     await input.waitFor({ state: 'visible', timeout: 10000 })

@@ -1,27 +1,23 @@
 import { supabaseAdmin } from '@/lib/supabase-server'
-import { toNamesAndTimesText, type ExportItem } from '@/lib/export-extraction'
+import { formatTimestamp, placeTitle } from '@/lib/utils'
 
-const SITE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://thefoodcrawl.com').replace(/\/+$/, '')
+// Text-only watermark. NO url and NO bare domain — YouTube auto-links both,
+// and link comments get held/filtered on moderated channels (verified live:
+// the link version was held, this text-only version posted and stayed up).
+const WATERMARK = '— Extracted with thefoodcrawl 🗺️'
 
 type ComposeRow = {
   timestamp_sec: number | null
-  quote: string | null
   restaurants: {
     name: string
     name_local: string | null
-    city: string | null
-    country: string | null
-    cuisine: string | null
   }
 }
 
 /**
- * Stage 3 — build the comment for an already-extracted video.
- *
- * Reuses the site's own `toNamesAndTimesText` formatter (the "Copy names +
- * times" affordance), so the posted comment is byte-identical to what the UI
- * produces: "Name — m:ss" lines, chronological, with the Foodcrawl watermark
- * pointing at the video's map page. Returns null when nothing was extracted.
+ * Stage 3 — build the comment for an already-extracted video: chronological
+ * "Name — m:ss" lines + the text-only thefoodcrawl watermark. Returns null when
+ * nothing was extracted.
  */
 export async function composeComment(
   videoId: string
@@ -29,26 +25,24 @@ export async function composeComment(
   const sb = supabaseAdmin()
   const { data } = await sb
     .from('mentions')
-    .select('timestamp_sec, quote, restaurants!inner ( name, name_local, city, country, cuisine )')
+    .select('timestamp_sec, restaurants!inner ( name, name_local )')
     .eq('video_id', videoId)
     .returns<ComposeRow[]>()
 
   if (!data || data.length === 0) return null
 
-  const items: ExportItem[] = data
-    .map((m) => ({
-      name: m.restaurants.name,
-      nameLocal: m.restaurants.name_local,
-      city: m.restaurants.city,
-      country: m.restaurants.country,
-      cuisine: m.restaurants.cuisine,
-      quote: m.quote,
-      timestampSec: m.timestamp_sec,
-    }))
-    // chronological by appearance in the video; untimed entries sink to the end
-    .sort((a, b) => (a.timestampSec ?? Number.MAX_SAFE_INTEGER) - (b.timestampSec ?? Number.MAX_SAFE_INTEGER))
+  const lines = data
+    .slice()
+    .sort(
+      (a, b) =>
+        (a.timestamp_sec ?? Number.MAX_SAFE_INTEGER) - (b.timestamp_sec ?? Number.MAX_SAFE_INTEGER)
+    )
+    .map((m) => {
+      const name = placeTitle(m.restaurants.name, m.restaurants.name_local).primary
+      const ts = m.timestamp_sec != null ? formatTimestamp(m.timestamp_sec) : null
+      return ts ? `${name} — ${ts}` : name
+    })
 
-  const bareId = videoId.replace(/^yt:/, '')
-  const text = toNamesAndTimesText(items, { url: `${SITE}/v/${bareId}` })
-  return { text, count: items.length }
+  const text = `${lines.join('\n')}\n\n${WATERMARK}`
+  return { text, count: lines.length }
 }

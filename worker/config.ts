@@ -32,4 +32,9 @@ export const config = {
   tickMin: int('TICK_MIN', 5),
 
   headless: process.env.HEADLESS === 'true', // false → run under xvfb (recommended)
+
+  // Persistent Chrome profile (self-refreshing session). Seed once with seed-profile.ts.
+  profileDir: process.env.YT_PROFILE_DIR || 'worker/yt-profile',
+  // Set YT_CHANNEL=chrome to use system Google Chrome; unset → bundled chromium.
+  channel: (process.env.YT_CHANNEL as 'chrome' | undefined) || undefined,
 }

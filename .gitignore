@@ -44,3 +44,7 @@ next-env.d.ts
 # worker secrets/session
 worker/.env
 worker/yt-state.json
+
+# session/cookies — never commit
+worker/yt-profile/
+worker/cookies.json
