@@ -1,0 +1,19 @@
+name: tracker-maintenance
+# Renews WebSub leases + RSS-backfill reconciliation.
+# On Vercel Pro the vercel.json cron does this — delete this file if so.
+on:
+  schedule:
+    - cron: '17 */6 * * *'   # every 6h, offset so it doesn't collide on the hour
+  workflow_dispatch:
+
+jobs:
+  maintain:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Renew leases + poll feeds
+        env:
+          BASE: ${{ vars.TRACKER_BASE_URL || 'https://thefoodcrawl.com' }}
+          SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl -fsS -m 110 -X POST "$BASE/api/tracker/cron" \
+            -H "authorization: Bearer $SECRET"

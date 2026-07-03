@@ -1,0 +1,29 @@
+name: tracker-process
+# Drains comment_queue (detect → extract → compose → 'ready').
+# Plan-agnostic driver: needed on Vercel Hobby (crons are daily-only there).
+# On Vercel Pro the vercel.json cron does this — delete this file if so.
+on:
+  schedule:
+    - cron: '*/5 * * * *'   # every 5 min (GitHub's minimum; may be delayed under load)
+  workflow_dispatch:
+
+concurrency:
+  group: tracker-process
+  cancel-in-progress: false
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Drain queue (process one upload per call)
+        env:
+          BASE: ${{ vars.TRACKER_BASE_URL || 'https://thefoodcrawl.com' }}
+          SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          for i in $(seq 1 6); do
+            echo "--- pass $i ---"
+            curl -fsS -m 280 -X POST "$BASE/api/tracker/process" \
+              -H "authorization: Bearer $SECRET" || true
+            echo
+            sleep 5
+          done
