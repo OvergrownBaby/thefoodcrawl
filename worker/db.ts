@@ -1,5 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
+import WS from 'ws'
 import { config } from './config'
+
+// Node < 22 lacks a global WebSocket, which @supabase/supabase-js's RealtimeClient
+// constructs eagerly (even though this worker only uses REST). Provide one so
+// createClient() doesn't throw. Guarded: a no-op on Node 22+/Vercel where it exists.
+if (!(globalThis as any).WebSocket) (globalThis as any).WebSocket = WS
 
 export const sb = createClient(config.supabaseUrl, config.supabaseKey, {
   auth: { persistSession: false },
