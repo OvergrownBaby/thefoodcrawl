@@ -94,28 +94,110 @@ export async function postComment(
 }
 
 /**
- * Stage 5 — is our comment still on the video? Reloads and scans the comment
- * list for the first line of our text. No API key needed (reuses the browser).
+ * A token unique to our comments to scan for. Every composed comment ends with
+ * the `thefoodcrawl` watermark (see lib/tracker/compose.ts) — matching that is
+ * far more reliable than a restaurant-name slice, which can match another
+ * viewer who mentioned the same place (a false "alive"). Falls back to the
+ * first line if the watermark is ever absent.
  */
-export async function checkAlive(ctx: BrowserContext, videoId: string, text: string): Promise<boolean> {
-  const page = await ctx.newPage()
+function needleFor(text: string): string {
+  return text.includes('thefoodcrawl') ? 'thefoodcrawl' : (text.split('\n')[0] || '').slice(0, 30)
+}
+
+/**
+ * Open the comments "Sort by" menu and switch to newest-first (YouTube labels
+ * it "Show recent comments…"). Clicks run in-page because the paper-button and
+ * menu items intermittently fail Playwright's actionability checks. Returns
+ * false if the control never appeared.
+ */
+async function sortByNewest(page: Page): Promise<boolean> {
+  const opened = await page.evaluate(() => {
+    const b = Array.from(document.querySelectorAll('yt-dropdown-menu tp-yt-paper-button#label')).find(
+      (e) => /sort by/i.test(e.textContent || '')
+    ) as HTMLElement | undefined
+    if (!b) return false
+    b.click()
+    return true
+  })
+  if (!opened) return false
+  await page.waitForTimeout(1500)
+  const picked = await page.evaluate(() => {
+    const items = Array.from(
+      document.querySelectorAll('tp-yt-paper-listbox tp-yt-paper-item, a.yt-simple-endpoint')
+    ) as HTMLElement[]
+    const it =
+      items.find((e) => /recent comments/i.test(e.textContent || '') && e.offsetParent !== null) ||
+      items.find((e) => /recent comments/i.test(e.textContent || ''))
+    if (!it) return false
+    it.click()
+    return true
+  })
+  if (picked) await page.waitForTimeout(4000)
+  return picked
+}
+
+/**
+ * Stage 5 — is our comment PUBLICLY visible on the video?
+ *
+ * Runs in a fresh, logged-OUT browser (a random viewer's view): the worker's
+ * persistent profile is logged in and would see our own comment even if it were
+ * held for review or shadow-removed — a false "alive". We also switch the sort
+ * to newest-first so a fresh, low-engagement comment isn't buried under "Top
+ * comments" and wrongly reported gone. That false-negative is exactly what was
+ * silently flipping live comments to `removed`.
+ *
+ * Returns true (found), false (confidently absent under newest-first), or null
+ * (inconclusive — nav failed or the sort control never rendered). On null the
+ * caller must NOT record a result, so the row is retried next tick instead of
+ * being mislabeled.
+ */
+export async function checkAlive(
+  _ctx: BrowserContext,
+  videoId: string,
+  text: string
+): Promise<boolean | null> {
+  const needle = needleFor(text)
+  if (!needle) return null
+  const browser = await chromium.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-blink-features=AutomationControlled'],
+  })
   try {
+    const ctx = await browser.newContext({
+      userAgent:
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      locale: 'en-US',
+      viewport: { width: 1280, height: 900 },
+    })
+    const page = await ctx.newPage()
     await page.goto(`https://www.youtube.com/watch?v=${videoId}`, {
       waitUntil: 'domcontentloaded',
       timeout: 45000,
     })
     await dismissConsent(page)
-    const needle = (text.split('\n')[0] || '').slice(0, 30)
-    if (!needle) return false
-    for (let i = 0; i < 6; i++) {
-      await page.evaluate(() => window.scrollBy(0, 1500))
-      await page.waitForTimeout(1500)
+    await page.waitForTimeout(3000)
+    // Scroll to render the comments header, then flip to newest-first.
+    for (const y of [400, 800, 1200, 1600]) {
+      await page.evaluate((yy) => window.scrollTo(0, yy), y)
+      await page.waitForTimeout(1800)
+    }
+    await page.locator('ytd-comments-header-renderer').first().waitFor({ timeout: 20000 }).catch(() => {})
+    let sorted = false
+    for (let attempt = 0; attempt < 3 && !sorted; attempt++) {
+      sorted = await sortByNewest(page)
+      if (!sorted) await page.waitForTimeout(1500)
+    }
+    if (!sorted) return null // couldn't get a reliable newest-first view — don't guess "removed"
+
+    for (let i = 0; i < 12; i++) {
+      await page.evaluate(() => window.scrollBy(0, 1600))
+      await page.waitForTimeout(1300)
       if (await page.locator('#content-text', { hasText: needle }).count()) return true
     }
     return false
   } catch {
-    return false
+    return null
   } finally {
-    await page.close().catch(() => {})
+    await browser.close().catch(() => {})
   }
 }

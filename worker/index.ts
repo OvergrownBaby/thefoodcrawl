@@ -31,6 +31,10 @@ async function main() {
       // Stage 5: survival checks for anything posted >1h ago.
       for (const row of await dueForSurvival()) {
         const alive = await checkAlive(ctx, row.youtube_video_id, row.comment_text)
+        if (alive === null) {
+          console.log(`[survival] ${row.youtube_video_id} inconclusive — will retry next tick`)
+          continue
+        }
         await recordSurvival(row.id, alive)
         console.log(`[survival] ${row.youtube_video_id} alive=${alive}`)
       }
